@@ -1,37 +1,49 @@
-# Nom de l’exécutable
-EXEC = bin/labyrinthe
-
-# Dossier contenant le code source
-SRC_DIR = src
-
-# Fichiers source .c
-SRCS = $(wildcard $(SRC_DIR)/*.c)
-
-# Fichiers objets .o correspondants
-OBJS = $(SRCS:.c=.o)
+SRC_DIR = ./src
+BIN_DIR = ./bin
+BUILD_DIR = ./build
+INCLUDE_DIR = ./include
+TEST_DIR = $(SRC_DIR)/tests
 
 # Options du compilateur
 CC = gcc
-CFLAGS = -Wall -Wextra -g
+CFLAGS = -Wall -Wextra
+CPPFLAGS = -I$(INCLUDE_DIR)
 
-# Règle par défaut : construire l’exécutable
+OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/labyrinthe.o $(BUILD_DIR)/menu.o
+TEST_OBJS = $(BUILD_DIR)/test_labyrinthe.o
+
+EXEC = $(BIN_DIR)/main
+TEST_EXEC = $(BIN_DIR)/test_labyrinthe
+
+#Mode debug
+ifeq ($(MODE), debug)
+	CFLAGS += -g -O0
+endif
+
+#Gestion automatique des dependances
+DEPS = $(OBJS:.o=.d) $(TEST_OBJS:.o=.d)
+
 all: $(EXEC)
 
-# Comment construire l’exécutable
+# Construire l’exécutable
 $(EXEC): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^
+	mkdir -p $(BIN_DIR); $(CC) $^ -o $@
 
-# Comment construire les .o à partir des .c
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	mkdir -p $(BUILD_DIR); $(CC) $(CFLAGS) $(CPPFLAGS) -MMD -MP -c $< -o $@
+
+test: $(TEST_EXEC)
+
+$(TEST_EXEC): $(TEST_OBJS)
+	mkdir -p $(BIN_DIR); $(CC) $^ -o $@
+
+$(BUILD_DIR)/test_labyrinthe.o: $(TEST_DIR)/test_labyrinthe.c
+	mkdir -p $(BUILD_DIR); $(CC) $(CFLAGS) $(CPPFLAGS) -MMD -MP -c $< -o $@
+
+.PHONY: clean
 
 # Nettoyage des fichiers générés
 clean:
-	rm -f $(SRC_DIR)/*.o $(EXEC)
+	rm -f $(OBJS) $(EXEC) $(TEST_OBJS) $(TEST_EXEC)
 
-# Tout supprimer (clean + fichiers sauvegardés, scores...)
-mrproper: clean
-	rm -f save/*.cfg scores/*.score
-
-# Forcer la reconstruction
-re: clean all
+-include $(DEPS)
