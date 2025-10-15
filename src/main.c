@@ -7,8 +7,8 @@
 int main(){
 
     //Initialisation nécessaire
-    int * hauteur_labyrinthe = malloc(sizeof(int));
-    int * largeur_labyrinthe = malloc(sizeof(int));
+    int hauteur_labyrinthe;
+    int largeur_labyrinthe;
 
     int choix_du_joueur =  get_action_initial();
 
@@ -19,33 +19,37 @@ int main(){
             //get_taille_labyrinthe(hauteur_labyrinthe, largeur_labyrinthe);
 
             printf("\n Hauteur du labyrinthe : \n");
-            scanf("%d", hauteur_labyrinthe);
+            scanf("%d", &hauteur_labyrinthe);
 
             printf("\n Largeur du labyrinthe (Impaire) : \n");
-            scanf("%d", largeur_labyrinthe);
+            scanf("%d", &largeur_labyrinthe);
 
-            while((*largeur_labyrinthe % 2) != 1){
+            while((largeur_labyrinthe % 2) != 1){
                 printf("\n La largeur du labyrinthe doit etre un entier impaire, réssayez : \n");
-                scanf("%d", largeur_labyrinthe);
+                scanf("%d", &largeur_labyrinthe);
             }
 
-            int nbr_colonnes = (*largeur_labyrinthe * 2) + 1;
-            int nbr_lignes = (*hauteur_labyrinthe * 2) + 1;
+            int nbr_colonnes = (largeur_labyrinthe * 2) + 1;
+            int nbr_lignes = (hauteur_labyrinthe * 2) + 1;
 
-            int nbr_cellules_verticales = ((*hauteur_labyrinthe)- 1)/ 2;
-            int nbr_cellules_horizontales = ((*largeur_labyrinthe-1)/2);
-
+            int nbr_cellules_verticales = ((hauteur_labyrinthe)- 1)/ 2;
+            int nbr_cellules_horizontales = ((largeur_labyrinthe-1)/2);
+            
             allouer_cellules(nbr_cellules_verticales, nbr_cellules_horizontales);
-
-            allouer_grille(nbr_lignes, nbr_colonnes);
-
+            
+            allouer_grille(hauteur_labyrinthe, largeur_labyrinthe);
+            
             initialiser_cellules(nbr_cellules_verticales, nbr_cellules_horizontales);
-            initialiser_grille(nbr_lignes, nbr_colonnes, nbr_cellules_verticales, nbr_cellules_horizontales);
+            
+            initialiser_grille(hauteur_labyrinthe, largeur_labyrinthe, nbr_cellules_verticales, nbr_cellules_horizontales);
 
-            while (!labyrinthe_complet(nbr_lignes, nbr_colonnes, nbr_cellules_verticales, nbr_cellules_horizontales)) {
-                construire_labyrinthe(nbr_lignes, nbr_colonnes, nbr_cellules_verticales, nbr_cellules_horizontales);
-                afficher_labyrinthe(nbr_lignes, nbr_colonnes);  
+            afficher_labyrinthe(hauteur_labyrinthe, largeur_labyrinthe);
+
+            while (!labyrinthe_complet(hauteur_labyrinthe, largeur_labyrinthe, nbr_cellules_verticales, nbr_cellules_horizontales)) {
+                construire_labyrinthe(hauteur_labyrinthe, largeur_labyrinthe, nbr_cellules_verticales, nbr_cellules_horizontales);  
             }
+
+            afficher_labyrinthe(hauteur_labyrinthe, largeur_labyrinthe);
 
             liberer_grille(nbr_lignes);
             liberer_cellules(nbr_cellules_verticales);
@@ -67,3 +71,4 @@ int main(){
 
     return 0;
 }
+

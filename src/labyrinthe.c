@@ -8,16 +8,16 @@ Cellule **cellules;
 char **grille;
 
 
-
+// A TESTER
 void allouer_cellules(int nbr_cellules_verticales, int nbr_cellules_horizontales){
-    cellules = malloc(nbr_cellules_verticales * sizeof(char*));
+    cellules = malloc(nbr_cellules_verticales * sizeof(Cellule*));
     if (cellules == NULL) {
         perror("malloc");
         exit(EXIT_FAILURE);
     }
 
     for (int i = 0; i < nbr_cellules_verticales; i++) {
-        cellules[i] = malloc(nbr_cellules_horizontales * sizeof(char));
+        cellules[i] = malloc(nbr_cellules_horizontales * sizeof(Cellule));
         if (cellules[i] == NULL) {
             perror("malloc");
             exit(EXIT_FAILURE);
@@ -32,15 +32,16 @@ void liberer_cellules(int nbr_cellules_verticales){
     free(cellules);
 }
 
-void allouer_grille(int nbr_lignes, int nbr_colonnes){
-    grille = malloc(nbr_lignes * sizeof(char*));
+//A TESTER
+void allouer_grille(int hauteur_labyrinthe, int largeur_labyrinthe){
+    grille = malloc(hauteur_labyrinthe * sizeof(char*));
     if (grille == NULL) {
         perror("malloc");
         exit(EXIT_FAILURE);
     }
 
-    for (int i = 0; i < nbr_lignes; i++) {
-        grille[i] = malloc(nbr_colonnes * sizeof(char));
+    for (int i = 0; i < hauteur_labyrinthe; i++) {
+        grille[i] = malloc(largeur_labyrinthe * sizeof(char));
         if (grille[i] == NULL) {
             perror("malloc");
             exit(EXIT_FAILURE);
@@ -55,6 +56,7 @@ void liberer_grille(int nbr_lignes){
     free(grille);
 }
 
+// A TESTER
 void initialiser_cellules(int nbr_cellules_verticales, int nbr_cellules_horizontales){
     for (int i = 0 ; i < nbr_cellules_verticales ; i ++){
         for (int j = 0 ; j < nbr_cellules_horizontales ; j ++){
@@ -65,9 +67,11 @@ void initialiser_cellules(int nbr_cellules_verticales, int nbr_cellules_horizont
     }
 }
 
-void initialiser_grille(int nbr_lignes, int nbr_colonnes, int nbr_cellules_verticales, int nbr_cellules_horizontales){
-    for (int i = 0; i < nbr_lignes; i++) {
-        for (int j = 0; j < nbr_colonnes; j++) {
+//A TESTER
+void initialiser_grille(int hauteur_labyrinthe, int largeur_labyrinthe,
+                        int nbr_cellules_verticales, int nbr_cellules_horizontales) {
+    for (int i = 0; i < hauteur_labyrinthe; i++) {
+        for (int j = 0; j < largeur_labyrinthe; j++) {
             grille[i][j] = '#';
         }
     }
@@ -79,9 +83,9 @@ void initialiser_grille(int nbr_lignes, int nbr_colonnes, int nbr_cellules_verti
     }
 }
  
-void afficher_labyrinthe(int nbr_lignes, int nbr_colonnes){
-    for (int i = 0; i < nbr_lignes; i++) {
-        for (int j = 0; j < nbr_colonnes; j++) {
+void afficher_labyrinthe(int hauteur_labyrinthe, int largeur_labyrinthe){
+    for (int i = 0; i < hauteur_labyrinthe; i++) {
+        for (int j = 0; j < largeur_labyrinthe; j++) {
             printf("%c", grille[i][j]);
         }
         printf("\n");

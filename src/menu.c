@@ -15,7 +15,7 @@ int get_action_initial(){
     return choix;
 };
 
-void get_taille_labyrinthe(int * hauteur_labyrinthe, int * largeur_labyrinthe){
+void get_taille_labyrinthe(int  * hauteur_labyrinthe, int  * largeur_labyrinthe){
 
     printf("\n Hauteur du labyrinthe : \n");
     scanf("%d", hauteur_labyrinthe);
@@ -23,7 +23,7 @@ void get_taille_labyrinthe(int * hauteur_labyrinthe, int * largeur_labyrinthe){
     printf("\n Largeur du labyrinthe (Impaire) : \n");
     scanf("%d", largeur_labyrinthe);
 
-    while((*largeur_labyrinthe % 2) != 1){
+    while((largeur_labyrinthe % 2) != 1){
         printf("\n La largeur du labyrinthe doit etre un entier impaire, réssayez : \n");
         scanf("%d", largeur_labyrinthe);
     }
