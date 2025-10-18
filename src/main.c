@@ -7,66 +7,72 @@
 int main(){
 
     //Initialisation nécessaire
+    int choix_du_joueur = 0;
     int hauteur_labyrinthe;
     int largeur_labyrinthe;
+    Cellule cellules;
+    Grille grille;
+    char nom_labyrinthe[50];
 
-    int choix_du_joueur =  get_action_initial();
+    while (choix_du_joueur == 0) {
+        choix_du_joueur =  get_action_initial();
 
-    switch (choix_du_joueur ) {
-        case 1:
-            printf("Vous voulez créer un labyrinthe\n");
+        switch (choix_du_joueur) {
+            case 1:
+                printf("Vous voulez créer un labyrinthe\n");
+                
+                //get_taille_nom_labyrinthe()
+                
+                printf("\n Hauteur du labyrinthe : \n");
+                scanf("%d", &hauteur_labyrinthe);
 
-            //get_taille_labyrinthe(hauteur_labyrinthe, largeur_labyrinthe);
-
-            printf("\n Hauteur du labyrinthe : \n");
-            scanf("%d", &hauteur_labyrinthe);
-
-            printf("\n Largeur du labyrinthe (Impaire) : \n");
-            scanf("%d", &largeur_labyrinthe);
-
-            while((largeur_labyrinthe % 2) != 1){
-                printf("\n La largeur du labyrinthe doit etre un entier impaire, réssayez : \n");
+                printf("\n Largeur du labyrinthe (Impaire) : \n");
                 scanf("%d", &largeur_labyrinthe);
-            }
 
-            int nbr_colonnes = (largeur_labyrinthe * 2) + 1;
-            int nbr_lignes = (hauteur_labyrinthe * 2) + 1;
+                while ((largeur_labyrinthe % 2) != 1){
+                    printf("\n La largeur du labyrinthe doit etre un entier impaire, réssayez : \n");
+                    scanf("%d", &largeur_labyrinthe);
+                }
 
-            int nbr_cellules_verticales = ((hauteur_labyrinthe)- 1)/ 2;
-            int nbr_cellules_horizontales = ((largeur_labyrinthe-1)/2);
-            
-            allouer_cellules(nbr_cellules_verticales, nbr_cellules_horizontales);
-            
-            allouer_grille(hauteur_labyrinthe, largeur_labyrinthe);
-            
-            initialiser_cellules(nbr_cellules_verticales, nbr_cellules_horizontales);
-            
-            initialiser_grille(hauteur_labyrinthe, largeur_labyrinthe, nbr_cellules_verticales, nbr_cellules_horizontales);
+                printf("\n Nom du labyrinthe : \n");
+                scanf("%s", nom_labyrinthe);
+                
+                int nbr_cellules_verticales = (hauteur_labyrinthe - 1)/ 2;
+                int nbr_cellules_horizontales = (largeur_labyrinthe - 1) / 2;
+                
+                allouer_cellules(&cellules, nbr_cellules_verticales, nbr_cellules_horizontales);
+                allouer_grille(&grille, hauteur_labyrinthe, largeur_labyrinthe);
+                initialiser_cellules(&cellules);
+                initialiser_grille(&grille, &cellules);
+                
+                while (!labyrinthe_complet(&cellules, &grille)) {
+                    construire_labyrinthe(&cellules, &grille);  
+                }
 
-            afficher_labyrinthe(hauteur_labyrinthe, largeur_labyrinthe);
+                sauvegarder_labyrinthe(&grille, nom_labyrinthe);
+                afficher_labyrinthe(&grille);
 
-            while (!labyrinthe_complet(hauteur_labyrinthe, largeur_labyrinthe, nbr_cellules_verticales, nbr_cellules_horizontales)) {
-                construire_labyrinthe(hauteur_labyrinthe, largeur_labyrinthe, nbr_cellules_verticales, nbr_cellules_horizontales);  
-            }
+                liberer_grille(&grille);
+                liberer_cellules(&cellules);
 
-            afficher_labyrinthe(hauteur_labyrinthe, largeur_labyrinthe);
+                choix_du_joueur =  0;
+                break;
 
-            liberer_grille(nbr_lignes);
-            liberer_cellules(nbr_cellules_verticales);
-            break;
+            case 2:
+                printf("Vous voulez charger un labyrinthe\n");
+                break;
 
-        case 2:
-            printf("Vous voulez charger un labyrinthe\n");
-            break;
+            case 3:
+                printf("Vous voulez jouer\n");
+                break;
 
-        case 3:
-            printf("Vous voulez jouer\n");
-            break;
-
-        case 4:
-            printf("Vous voulez quitter\n");
-            break;
+            case 4:
+                printf("Vous voulez quitter\n");
+                break;
+        }
     }
+
+   
     
 
     return 0;

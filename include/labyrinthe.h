@@ -2,30 +2,38 @@
 #define LABYRINTHE_H
 
 typedef struct {
-    int groupe_cellules;
-    int x,y;    //Position de la cellule (par rappport aux autres cellules)
+    int **cellule_matrix;
+    int nbr_cellules_horizontales;
+    int nbr_cellules_verticales;  
 } Cellule;
 
-//extern int * hauteur_labyrinthe;
-//extern int * largeur_labyrinthe;
+typedef struct {
+    char **cases;
+    int hauteur;
+    int largeur;
+} Grille;
 
-void allouer_cellules(int nbr_cellules_verticales, int nbr_cellules_horizontales);
 
-void liberer_cellules(int nbr_cellules_verticales);
+void allouer_cellules(Cellule *cellules, int nbr_cellules_verticales, int nbr_cellules_horizontales);
 
-void allouer_grille(int nbr_lignes, int nbr_colonnes);
+void liberer_cellules(Cellule *cellules);
 
-void liberer_grille(int nbr_lignes);
+void allouer_grille(Grille *grille, int hauteur_labyrinthe, int largeur_labyrinthe);
 
-void initialiser_cellules(int nbr_cellules_verticales, int nbr_cellules_horizontales);
+void liberer_grille(Grille *grille);
 
-void initialiser_grille(int hauteur_labyrinthe, int largeur_labyrinthe, int nbr_cellules_verticales, int nbr_cellules_horizontales);
+void initialiser_cellules(Cellule *cellules);
 
-void afficher_labyrinthe(int nbr_lignes, int nbr_colonnes);
+void initialiser_grille(Grille *grille, Cellule *cellules);
 
-void construire_labyrinthe(int nbr_lignes, int nbr_colonnes, int nbr_cellules_verticales, int nbr_cellules_horizontales);
+void afficher_labyrinthe(Grille *grille);
 
-int labyrinthe_complet(int nbr_lignes, int nbr_colonnes, int nbr_cellules_verticales, int nbr_cellules_horizontales);
+void construire_labyrinthe(Cellule *cellules, Grille *grille);
 
+int labyrinthe_complet(Cellule *cellules, Grille *grille);
+
+void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe);
+
+//void charger_labyrinthe()
 
 #endif

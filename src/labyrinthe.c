@@ -3,96 +3,95 @@
 #include <time.h>
 #include "labyrinthe.h"
 
-
-Cellule **cellules;
-char **grille;
-
-
 // A TESTER
-void allouer_cellules(int nbr_cellules_verticales, int nbr_cellules_horizontales){
-    cellules = malloc(nbr_cellules_verticales * sizeof(Cellule*));
-    if (cellules == NULL) {
+void allouer_cellules(Cellule *cellules, int nbr_cellules_verticales, int nbr_cellules_horizontales){
+
+    cellules->nbr_cellules_horizontales = nbr_cellules_horizontales;
+    cellules->nbr_cellules_verticales = nbr_cellules_verticales;
+
+    cellules->cellule_matrix = malloc(cellules->nbr_cellules_verticales * sizeof(int*));
+    if (cellules->cellule_matrix == NULL) {
         perror("malloc");
         exit(EXIT_FAILURE);
     }
 
-    for (int i = 0; i < nbr_cellules_verticales; i++) {
-        cellules[i] = malloc(nbr_cellules_horizontales * sizeof(Cellule));
-        if (cellules[i] == NULL) {
+    for (int i = 0; i < cellules->nbr_cellules_verticales; i++) {
+        cellules->cellule_matrix[i] = malloc(cellules->nbr_cellules_horizontales * sizeof(int));
+        if (cellules->cellule_matrix[i] == NULL) {
             perror("malloc");
             exit(EXIT_FAILURE);
         }
     }
 }
 
-void liberer_cellules(int nbr_cellules_verticales){
-    for (int i = 0; i < nbr_cellules_verticales; i++) {
-        free(cellules[i]);
+void liberer_cellules(Cellule *cellules){
+    for (int i = 0; i < cellules->nbr_cellules_verticales; i++) {
+        free(cellules->cellule_matrix[i]);
     }
-    free(cellules);
+    free(cellules->cellule_matrix);
 }
 
 //A TESTER
-void allouer_grille(int hauteur_labyrinthe, int largeur_labyrinthe){
-    grille = malloc(hauteur_labyrinthe * sizeof(char*));
-    if (grille == NULL) {
+void allouer_grille(Grille *grille, int hauteur_labyrinthe, int largeur_labyrinthe){
+    
+    grille->largeur = largeur_labyrinthe;
+    grille->hauteur = hauteur_labyrinthe;
+    grille->cases = malloc(grille->hauteur * sizeof(char*));
+    if (grille->cases == NULL) {
         perror("malloc");
         exit(EXIT_FAILURE);
     }
 
-    for (int i = 0; i < hauteur_labyrinthe; i++) {
-        grille[i] = malloc(largeur_labyrinthe * sizeof(char));
-        if (grille[i] == NULL) {
+    for (int i = 0; i < grille->hauteur; i++) {
+        grille->cases[i] = malloc(grille->largeur * sizeof(char));
+        if (grille->cases[i] == NULL) {
             perror("malloc");
             exit(EXIT_FAILURE);
         }
     }
 }
 
-void liberer_grille(int nbr_lignes){
-    for (int i = 0; i < nbr_lignes; i++) {
-        free(grille[i]);
+void liberer_grille(Grille *grille){
+    for (int i = 0; i <grille->hauteur; i++) {
+        free(grille->cases[i]);
     }
-    free(grille);
+    free(grille->cases);
 }
 
 // A TESTER
-void initialiser_cellules(int nbr_cellules_verticales, int nbr_cellules_horizontales){
-    for (int i = 0 ; i < nbr_cellules_verticales ; i ++){
-        for (int j = 0 ; j < nbr_cellules_horizontales ; j ++){
-            cellules[i][j].x = i;
-            cellules[i][j].y = j;
-            cellules[i][j].groupe_cellules = i * nbr_cellules_horizontales + j;
+void initialiser_cellules(Cellule *cellules){
+    for (int i = 0 ; i < cellules->nbr_cellules_verticales ; i ++){
+        for (int j = 0 ; j < cellules->nbr_cellules_horizontales ; j ++){
+            cellules->cellule_matrix[i][j] = i * cellules->nbr_cellules_horizontales + j;
         }
     }
 }
 
 //A TESTER
-void initialiser_grille(int hauteur_labyrinthe, int largeur_labyrinthe,
-                        int nbr_cellules_verticales, int nbr_cellules_horizontales) {
-    for (int i = 0; i < hauteur_labyrinthe; i++) {
-        for (int j = 0; j < largeur_labyrinthe; j++) {
-            grille[i][j] = '#';
+void initialiser_grille(Grille *grille, Cellule *cellules) {
+    for (int i = 0; i < grille->hauteur; i++) {
+        for (int j = 0; j < grille->largeur; j++) {
+            grille->cases[i][j] = '#';
         }
     }
 
-    for (int i = 0; i < nbr_cellules_verticales; i++) {
-        for (int j = 0; j < nbr_cellules_horizontales; j++) {
-            grille[2 * i + 1][2 * j + 1] = ' ';
+    for (int i = 0; i < cellules->nbr_cellules_verticales; i++) {
+        for (int j = 0; j < cellules->nbr_cellules_horizontales; j++) {
+            grille->cases[2 * i + 1][2 * j + 1] = ' ';
         }
     }
 }
- 
-void afficher_labyrinthe(int hauteur_labyrinthe, int largeur_labyrinthe){
-    for (int i = 0; i < hauteur_labyrinthe; i++) {
-        for (int j = 0; j < largeur_labyrinthe; j++) {
-            printf("%c", grille[i][j]);
+
+void afficher_labyrinthe(Grille *grille){
+    for (int i = 0; i < grille->hauteur; i++) {
+        for (int j = 0; j < grille->largeur; j++) {
+            printf("%c", grille->cases[i][j]);
         }
         printf("\n");
     }
 }
 
-void construire_labyrinthe(int nbr_lignes, int nbr_colonnes, int nbr_cellules_verticales, int nbr_cellules_horizontales){
+void construire_labyrinthe(Cellule *cellules, Grille *grille) {
     static int initialised = 0;
     if (!initialised) {
         srand(time(NULL));
@@ -100,64 +99,98 @@ void construire_labyrinthe(int nbr_lignes, int nbr_colonnes, int nbr_cellules_ve
     }
 
     int i_random, j_random;
+    int ci1, cj1, ci2, cj2;
+    int nbr_cellules_verticales = cellules->nbr_cellules_verticales;
+    int nbr_cellules_horizontales = cellules->nbr_cellules_horizontales;
 
-    // choix random du mur
-    while (1) {
-        i_random = 1 + rand() % (nbr_lignes - 2);
-        j_random = 1 + rand() % (nbr_colonnes - 2);
+    // Boucle jusqu'à ce qu'on trouve un mur qui sépare deux groupes différents
+    int trouve_mur = 0;
+    while (!trouve_mur) {
+        i_random = 1 + rand() % (grille->hauteur - 2);
+        j_random = 1 + rand() % (grille->largeur - 2);
 
+        // Mur horizontal ou vertical
         if ((i_random % 2 == 0 && j_random % 2 == 1) ||
             (i_random % 2 == 1 && j_random % 2 == 0)) {
-            break;
+
+            if (i_random % 2 == 0) {
+                // Mur horizontal
+                ci1 = (i_random - 1)/2;
+                cj1 = (j_random - 1)/2;
+                ci2 = (i_random + 1)/2;
+                cj2 = cj1;
+                trouve_mur = 1;
+            } else {
+                // Mur vertical
+                ci1 = (i_random - 1)/2 ;
+                cj1 = (j_random - 1)/2;
+                ci2 = ci1;
+                cj2 = (j_random + 1)/2;
+                trouve_mur = 1;
+            }
+
+            // Vérification des bornes
+            //if (ci2 >= nbr_cellules_verticales) ci2 = nbr_cellules_verticales - 1;
+            //if (cj2 >= nbr_cellules_horizontales) cj2 = nbr_cellules_horizontales - 1;
         }
     }
 
-    // Coordonnées des deux cellules autour du mur
-    int ci1, cj1, ci2, cj2;
+    int groupe_cellule_1 = cellules->cellule_matrix[ci1][cj1];
+    int groupe_cellule_2 = cellules->cellule_matrix[ci2][cj2];
 
-    if (i_random % 2 == 0) {
-        // mur horizontal
-        ci1 = (i_random - 1) / 2;
-        cj1 = (j_random - 1) / 2;
-        ci2 = (i_random + 1) / 2;
-        cj2 = cj1;
-    } else {
-        // mur vertical
-        ci1 = (i_random - 1) / 2;
-        cj1 = (j_random - 1) / 2;
-        ci2 = ci1;
-        cj2 = (j_random + 1) / 2;
-    }
-
-    int g1 = cellules[ci1][cj1].groupe_cellules;
-    int g2 = cellules[ci2][cj2].groupe_cellules;
-
-    if (g1 != g2) {
+    if (groupe_cellule_1 != groupe_cellule_2) {
         // Ouvrir le mur
-        grille[i_random][j_random] = ' ';
+        grille->cases[i_random][j_random] = ' ';
 
-        // Fusionner les groupes : remplacer tous les g2 par g1
+        // Fusioner les groupes
         for (int i = 0; i < nbr_cellules_verticales; i++) {
             for (int j = 0; j < nbr_cellules_horizontales; j++) {
-                if (cellules[i][j].groupe_cellules == g2) {
-                    cellules[i][j].groupe_cellules = g1;
+                if (cellules->cellule_matrix[i][j] == groupe_cellule_2) {
+                    cellules->cellule_matrix[i][j] = groupe_cellule_1;
                 }
             }
         }
     }
 }
 
-int labyrinthe_complet(int nbr_lignes, int nbr_colonnes, int nbr_cellules_verticales, int nbr_cellules_horizontales){
-    int groupe_ref = cellules[0][0].groupe_cellules;
-    for (int i = 0; i < nbr_cellules_verticales; i++) {
-        for (int j = 0; j < nbr_cellules_horizontales; j++) {
-            if (cellules[i][j].groupe_cellules != groupe_ref) {
+int labyrinthe_complet(Cellule *cellules, Grille *grille) {
+
+    int groupe_ref = cellules->cellule_matrix[0][0];
+
+    for (int i = 0; i < cellules->nbr_cellules_verticales; i++) {
+        for (int j = 0; j < cellules->nbr_cellules_horizontales; j++) {
+            if (cellules->cellule_matrix[i][j] != groupe_ref) {
                 return 0; 
             }
         }
     }
 
-    grille[0][1] = 'o';
-    grille[nbr_lignes - 1][nbr_colonnes - 2] = '-';
+    grille->cases[0][1] = 'o';                                       // Entrée
+    grille->cases[grille->hauteur - 1][grille->largeur - 2] = '-';   // Sortie
+
     return 1;
 }
+
+void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe) {
+    FILE *f = fopen(nom_labyrinthe, "w");
+    if (!f) {
+        perror("Erreur ouverture fichier");
+        return;
+    }
+
+    fprintf(f, "Nom du labyrinthe : %s\n", nom_labyrinthe);
+
+
+    for (int i = 0; i < grille->hauteur; i++) {
+        for (int j = 0; j < grille->largeur; j++) {
+            fputc(grille->cases[i][j], f);
+        }
+        fputc('\n', f);
+    }
+    fclose(f);
+}
+
+/*
+void charger_labyrinthe(){
+
+}*/
