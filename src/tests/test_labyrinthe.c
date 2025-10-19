@@ -1,6 +1,7 @@
 #include "minunit.h"
 #include "labyrinthe.h"
 
+/*this is just a test for the git push origin master*/
 void test_setup(void) {
 }
 
