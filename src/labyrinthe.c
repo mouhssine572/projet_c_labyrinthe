@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -172,14 +173,16 @@ int labyrinthe_complet(Cellule *cellules, Grille *grille) {
 }
 
 void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe) {
-    FILE *f = fopen(nom_labyrinthe, "w");
+    CREATE_DIR("labyrinthe");
+    char chemin_complet[100];
+    snprintf(chemin_complet, 100, "labyrinthe/%s", nom_labyrinthe);
+    FILE *f = fopen(chemin_complet, "w");
     if (!f) {
-        perror("Erreur ouverture fichier");
+        perror("Erreur ouverture fichier de sauvegarde");
         return;
     }
 
-    fprintf(f, "Nom du labyrinthe : %s\n", nom_labyrinthe);
-
+    fprintf(f, "%d %d\n", grille->hauteur, grille->largeur);
 
     for (int i = 0; i < grille->hauteur; i++) {
         for (int j = 0; j < grille->largeur; j++) {
@@ -187,10 +190,39 @@ void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe) {
         }
         fputc('\n', f);
     }
+    
     fclose(f);
 }
 
-/*
-void charger_labyrinthe(){
+void charger_labyrinthe(Grille *grille, char *nom_labyrinthe) {
+    char chemin_complet[100];
+    snprintf(chemin_complet, 100, "labyrinthe/%s", nom_labyrinthe);
+    FILE *fichier = fopen(chemin_complet, "r");
+    if (fichier == NULL) {
+        perror("Erreur lors de l'ouverture du fichier");
+        exit(EXIT_FAILURE);
+    }
 
-}*/
+    if (fscanf(fichier, "%d %d", &grille->hauteur, &grille->largeur) != 2) {
+        fprintf(stderr, "Erreur: Impossible de lire les dimensions du labyrinthe.\n");
+        fclose(fichier);
+        exit(EXIT_FAILURE);
+    }
+
+    // Consommer le saut de ligne après les dimensions
+    fgetc(fichier);
+
+    allouer_grille(grille, grille->hauteur, grille->largeur);
+
+    for (int i = 0; i < grille->hauteur; i++) {
+        if (fgets(grille->cases[i], grille->largeur + 2, fichier) == NULL) { // +2 pour \n et \0
+            fprintf(stderr, "Erreur: Impossible de lire les données du labyrinthe.\n");
+            fclose(fichier);
+            exit(EXIT_FAILURE);
+        }
+        // Optionnel: supprimer le saut de ligne si fgets le capture
+        grille->cases[i][strcspn(grille->cases[i], "\n")] = 0;
+    }
+
+    fclose(fichier);
+}

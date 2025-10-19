@@ -60,6 +60,13 @@ int main(){
 
             case 2:
                 printf("Vous voulez charger un labyrinthe\n");
+                printf("\n Nom du labyrinthe à charger : \n");
+                scanf("%s", nom_labyrinthe);
+                
+                charger_labyrinthe(&grille, nom_labyrinthe);
+                afficher_labyrinthe(&grille);
+                liberer_grille(&grille);
+                choix_du_joueur = 0;
                 break;
 
             case 3:

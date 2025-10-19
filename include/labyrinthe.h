@@ -1,6 +1,14 @@
 #ifndef LABYRINTHE_H
 #define LABYRINTHE_H
 
+#ifdef _WIN32
+    #include <direct.h> // Pour _mkdir() sur Windows
+    #define CREATE_DIR(path) _mkdir(path)
+#else
+    #include <sys/stat.h> // Pour mkdir() sur Linux/macOS
+    #define CREATE_DIR(path) mkdir(path, 0777)
+#endif
+
 typedef struct {
     int **cellule_matrix;
     int nbr_cellules_horizontales;
@@ -34,6 +42,6 @@ int labyrinthe_complet(Cellule *cellules, Grille *grille);
 
 void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe);
 
-//void charger_labyrinthe()
+void charger_labyrinthe(Grille *grille, char *nom_labyrinthe);
 
 #endif

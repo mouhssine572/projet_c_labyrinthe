@@ -29,3 +29,12 @@ void get_taille_nom_labyrinthe(int hauteur_labyrinthe, int largeur_labyrinthe){
     }
 }
 
+/*void get_nom_labyrinthe(char *nom_labyrinthe){
+    printf("\n Choississez un labyrinthe de la liste suivante : \n");
+
+    
+    scanf("%d", nom_labyrinthe);
+    
+    return choix;
+};*/
+
