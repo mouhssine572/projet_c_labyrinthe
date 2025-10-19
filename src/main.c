@@ -1,18 +1,19 @@
 #include "menu.h"
 #include "labyrinthe.h"
-
+#include "jouer.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 int main(){
 
-    //Initialisation nécessaire
     int choix_du_joueur = 0;
     int hauteur_labyrinthe;
     int largeur_labyrinthe;
+    char nom_labyrinthe[50];
     Cellule cellules;
     Grille grille;
-    char nom_labyrinthe[50];
+    Joueur joueur_1;
+    
 
     while (choix_du_joueur == 0) {
         choix_du_joueur =  get_action_initial();
@@ -20,8 +21,6 @@ int main(){
         switch (choix_du_joueur) {
             case 1:
                 printf("Vous voulez créer un labyrinthe\n");
-                
-                //get_taille_nom_labyrinthe()
                 
                 printf("\n Hauteur du labyrinthe : \n");
                 scanf("%d", &hauteur_labyrinthe);
@@ -60,21 +59,30 @@ int main(){
 
             case 2:
                 printf("Vous voulez charger un labyrinthe\n");
-                printf("\n Nom du labyrinthe à charger : \n");
-                scanf("%s", nom_labyrinthe);
+                get_nom_labyrinthe(nom_labyrinthe);
                 
                 charger_labyrinthe(&grille, nom_labyrinthe);
                 afficher_labyrinthe(&grille);
+
                 liberer_grille(&grille);
+
                 choix_du_joueur = 0;
                 break;
 
             case 3:
-                printf("Vous voulez jouer\n");
+                get_nom_labyrinthe(nom_labyrinthe);
+                charger_labyrinthe(&grille, nom_labyrinthe);
+                joueur_1.x = 0;
+                joueur_1.y = 1;
+
+                jouer_labyrinthe(&grille, &joueur_1);
+
+                liberer_grille(&grille);
+                choix_du_joueur = 0;
                 break;
 
             case 4:
-                printf("Vous voulez quitter\n");
+                printf("Vous quittez le jeu\n");
                 break;
         }
     }

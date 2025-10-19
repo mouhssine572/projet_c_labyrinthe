@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <dirent.h>
+#include <string.h>
 #include "menu.h"
 
 int get_action_initial(){
@@ -13,28 +15,31 @@ int get_action_initial(){
     scanf("%d", &choix);
     
     return choix;
-};
-
-void get_taille_nom_labyrinthe(int hauteur_labyrinthe, int largeur_labyrinthe){
-
-    printf("\n Hauteur du labyrinthe : \n");
-    scanf("%d", &hauteur_labyrinthe);
-
-    printf("\n Largeur du labyrinthe (Impaire) : \n");
-    scanf("%d", &largeur_labyrinthe);
-
-    while((largeur_labyrinthe % 2) != 1){
-        printf("\n La largeur du labyrinthe doit etre un entier impaire, réssayez : \n");
-        scanf("%d", &largeur_labyrinthe);
-    }
 }
 
-/*void get_nom_labyrinthe(char *nom_labyrinthe){
-    printf("\n Choississez un labyrinthe de la liste suivante : \n");
+void get_nom_labyrinthe(char *nom_labyrinthe) {
+    printf("\n Choissisez un labyrinthe de la liste (entrez le nom du fichier) : \n");
+    
+    DIR *d = opendir("labyrinthe"); 
+    int fichiers_trouves = 0;
 
-    
-    scanf("%d", nom_labyrinthe);
-    
-    return choix;
-};*/
+    if (d) {
+        struct dirent *dir;
+        
+        while ((dir = readdir(d)) != NULL) {
+            // Ignorer les entrées système "." et ".."
+            if (strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0) {
+                printf("- %s\n", dir->d_name);
+                fichiers_trouves = 1;
+            }
+        }
+        closedir(d);
+    }
+
+    if (!d || !fichiers_trouves) {
+        printf("Le labyrinthe choisie est introuvable ou vide.\n");
+    }
+
+    scanf("%s", nom_labyrinthe); 
+}
 

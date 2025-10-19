@@ -9,7 +9,7 @@ CC = gcc
 CFLAGS = -Wall -Wextra
 CPPFLAGS = -I$(INCLUDE_DIR)
 
-OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/labyrinthe.o $(BUILD_DIR)/menu.o
+OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/labyrinthe.o $(BUILD_DIR)/menu.o $(BUILD_DIR)/jouer.o
 TEST_OBJS = $(BUILD_DIR)/test_labyrinthe.o
 
 EXEC = $(BIN_DIR)/main
