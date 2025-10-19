@@ -4,7 +4,6 @@
 #include <time.h>
 #include "labyrinthe.h"
 
-// A TESTER
 void allouer_cellules(Cellule *cellules, int nbr_cellules_verticales, int nbr_cellules_horizontales){
 
     cellules->nbr_cellules_horizontales = nbr_cellules_horizontales;
@@ -32,7 +31,6 @@ void liberer_cellules(Cellule *cellules){
     free(cellules->cellule_matrix);
 }
 
-//A TESTER
 void allouer_grille(Grille *grille, int hauteur_labyrinthe, int largeur_labyrinthe){
     
     grille->largeur = largeur_labyrinthe;
@@ -59,7 +57,6 @@ void liberer_grille(Grille *grille){
     free(grille->cases);
 }
 
-// A TESTER
 void initialiser_cellules(Cellule *cellules){
     for (int i = 0 ; i < cellules->nbr_cellules_verticales ; i ++){
         for (int j = 0 ; j < cellules->nbr_cellules_horizontales ; j ++){
@@ -68,7 +65,6 @@ void initialiser_cellules(Cellule *cellules){
     }
 }
 
-//A TESTER
 void initialiser_grille(Grille *grille, Cellule *cellules) {
     for (int i = 0; i < grille->hauteur; i++) {
         for (int j = 0; j < grille->largeur; j++) {
@@ -92,7 +88,7 @@ void afficher_labyrinthe(Grille *grille){
     }
 }
 
-void construire_labyrinthe(Cellule *cellules, Grille *grille) {
+void construire_labyrinthe(Cellule *cellules, Grille *grille){
     static int initialised = 0;
     if (!initialised) {
         srand(time(NULL));
@@ -129,10 +125,6 @@ void construire_labyrinthe(Cellule *cellules, Grille *grille) {
                 cj2 = (j_random + 1)/2;
                 trouve_mur = 1;
             }
-
-            // Vérification des bornes
-            //if (ci2 >= nbr_cellules_verticales) ci2 = nbr_cellules_verticales - 1;
-            //if (cj2 >= nbr_cellules_horizontales) cj2 = nbr_cellules_horizontales - 1;
         }
     }
 
@@ -154,7 +146,7 @@ void construire_labyrinthe(Cellule *cellules, Grille *grille) {
     }
 }
 
-int labyrinthe_complet(Cellule *cellules, Grille *grille) {
+int labyrinthe_complet(Cellule *cellules, Grille *grille){
 
     int groupe_ref = cellules->cellule_matrix[0][0];
 
@@ -172,7 +164,7 @@ int labyrinthe_complet(Cellule *cellules, Grille *grille) {
     return 1;
 }
 
-void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe) {
+void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe){
     CREATE_DIR("labyrinthe");
     char chemin_complet[100];
     snprintf(chemin_complet, 100, "labyrinthe/%s", nom_labyrinthe);
@@ -194,7 +186,7 @@ void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe) {
     fclose(f);
 }
 
-void charger_labyrinthe(Grille *grille, char *nom_labyrinthe) {
+void charger_labyrinthe(Grille *grille, char *nom_labyrinthe){
     char chemin_complet[100];
     snprintf(chemin_complet, 100, "labyrinthe/%s", nom_labyrinthe);
     FILE *fichier = fopen(chemin_complet, "r");

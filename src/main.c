@@ -1,5 +1,4 @@
 #include "menu.h"
-#include "labyrinthe.h"
 #include "jouer.h"
 #include <stdio.h>
 #include <stdlib.h>
