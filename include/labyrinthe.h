@@ -44,4 +44,6 @@ void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe);
 
 void charger_labyrinthe(Grille *grille, char *nom_labyrinthe);
 
+void drop_key(Grille *grille);
+
 #endif

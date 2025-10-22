@@ -144,6 +144,7 @@ void construire_labyrinthe(Cellule *cellules, Grille *grille){
             }
         }
     }
+
 }
 
 int labyrinthe_complet(Cellule *cellules, Grille *grille){
@@ -217,4 +218,23 @@ void charger_labyrinthe(Grille *grille, char *nom_labyrinthe){
     }
 
     fclose(fichier);
+}
+
+void drop_key(Grille *grille){
+    static int initialised = 0;
+    if (!initialised) {
+        srand(time(NULL));
+        initialised = 1;
+    }
+
+    int i_random;
+    int j_random;
+
+    do{
+        i_random = 1 + rand() % (grille->hauteur - 2);
+        j_random = 1 + rand() % (grille->largeur - 2);
+    }while(grille->cases[i_random][j_random] != '#');
+
+    grille->cases[i_random][j_random] = '$';
+
 }

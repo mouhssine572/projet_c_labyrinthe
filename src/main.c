@@ -47,6 +47,7 @@ int main(){
                     construire_labyrinthe(&cellules, &grille);  
                 }
 
+                drop_key(&grille);
                 sauvegarder_labyrinthe(&grille, nom_labyrinthe);
                 afficher_labyrinthe(&grille);
 
@@ -71,8 +72,7 @@ int main(){
             case 3:
                 get_nom_labyrinthe(nom_labyrinthe);
                 charger_labyrinthe(&grille, nom_labyrinthe);
-                joueur_1.x = 0;
-                joueur_1.y = 1;
+                initialiser_joueur(&joueur_1);
 
                 jouer_labyrinthe(&grille, &joueur_1);
 
