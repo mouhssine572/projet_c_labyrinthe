@@ -47,7 +47,14 @@ int main(){
                     construire_labyrinthe(&cellules, &grille);  
                 }
 
-                drop_key(&grille);
+                drop_motif(&grille, MOTIF_KEY);
+                
+                int nbr_motifs_a_placer = (hauteur_labyrinthe * largeur_labyrinthe) * 0.02;
+                for (int k = 0; k < nbr_motifs_a_placer; k++) {
+                    drop_motif(&grille, MOTIF_TRAP); 
+                    drop_motif(&grille, MOTIF_BOOST);
+                }
+
                 sauvegarder_labyrinthe(&grille, nom_labyrinthe);
                 afficher_labyrinthe(&grille);
 

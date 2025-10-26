@@ -3,10 +3,15 @@
 #include "labyrinthe.h"
 
 
+#define MOTIF_KEY '$'
+#define MOTIF_TRAP '@'
+#define MOTIF_BOOST '&'
+
 typedef struct {
     int x;
     int y;
     int have_key;
+    int score;
 } Joueur;
 
 void initialiser_joueur(Joueur *joueur);
@@ -20,5 +25,7 @@ int mouvement_valide(Grille *grille, int x, int y, Joueur *joueur);
 void jouer_labyrinthe(Grille *grille, Joueur *joueur);
 
 int joueur_gagne(Grille *grille, Joueur *joueur);
+
+int get_score_joueur(Joueur *joueur);
 
 #endif

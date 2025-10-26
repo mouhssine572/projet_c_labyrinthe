@@ -220,7 +220,7 @@ void charger_labyrinthe(Grille *grille, char *nom_labyrinthe){
     fclose(fichier);
 }
 
-void drop_key(Grille *grille){
+void drop_motif(Grille *grille, char motif){
     static int initialised = 0;
     if (!initialised) {
         srand(time(NULL));
@@ -233,8 +233,8 @@ void drop_key(Grille *grille){
     do{
         i_random = 1 + rand() % (grille->hauteur - 2);
         j_random = 1 + rand() % (grille->largeur - 2);
-    }while(grille->cases[i_random][j_random] != '#');
+    }while(grille->cases[i_random][j_random] != ' ');
 
-    grille->cases[i_random][j_random] = '$';
+    grille->cases[i_random][j_random] = motif;
 
 }
