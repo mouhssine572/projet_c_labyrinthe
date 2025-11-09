@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "jouer.h"
 #include "labyrinthe.h"
 
@@ -81,6 +82,7 @@ void jouer_labyrinthe(Grille *grille, Joueur *joueur){
         afficher_labyrinthe(grille);
         mouvement_joueur(grille, joueur);                 
     } while(joueur_gagne(grille, joueur) == 0);
+
 }
 
 int joueur_gagne(Grille *grille, Joueur *joueur){
@@ -91,4 +93,69 @@ int joueur_gagne(Grille *grille, Joueur *joueur){
 
 int get_score_joueur(Joueur *joueur){
     return joueur -> score; 
+}
+
+int set_score_joueur(Grille *grille, Joueur *joueur) {
+    
+    int score_joueur = get_score_joueur(joueur);
+    int maj_scores = 0;
+    int index_insertion = -1;
+
+    for (int i = 0; i < NOMBRE_SCORE; i++) {
+        int score_actuel = grille->scores[i];
+        if (score_actuel == 0 || score_joueur < score_actuel) {
+            index_insertion = i;
+            break;
+        }
+    }
+
+    if (index_insertion != -1) {
+        
+        for (int i = NOMBRE_SCORE - 1; i > index_insertion; i--) {
+            grille->scores[i] = grille->scores[i - 1];
+        }
+        
+        grille->scores[index_insertion] = score_joueur;
+        maj_scores = 1;
+    }
+    
+    return maj_scores;
+}
+
+void sauvegarder_score(Grille *grille_de_jeu, char *nom_labyrinthe) {
+
+    Grille grille_sauvegarde;
+    
+    charger_labyrinthe(&grille_sauvegarde, nom_labyrinthe); 
+
+    memcpy(grille_sauvegarde.scores, grille_de_jeu->scores, sizeof(grille_sauvegarde.scores));
+    
+    CREATE_DIR("labyrinthe");
+    char chemin_complet[100];
+    snprintf(chemin_complet, 100, "labyrinthe/%s", nom_labyrinthe);
+    FILE *f = fopen(chemin_complet, "w");
+    if (!f) {
+        perror("Erreur ouverture fichier de sauvegarde");
+        liberer_grille(&grille_sauvegarde);
+        return;
+    }
+
+    fprintf(f, "%d %d\n", grille_sauvegarde.hauteur, grille_sauvegarde.largeur);
+
+    for (int i = 0; i < grille_sauvegarde.hauteur; i++) {
+        for (int j = 0; j < grille_sauvegarde.largeur; j++) {
+            fputc(grille_sauvegarde.cases[i][j], f);
+        }
+        fputc('\n', f);
+    }
+
+    for (int i = 0; i < NOMBRE_SCORE; i++) {
+        int score = grille_sauvegarde.scores[i];
+        if (score >= 1) { 
+                fprintf(f, "%d\n", score);
+        }
+    }
+
+    fclose(f);
+    liberer_grille(&grille_sauvegarde);
 }

@@ -28,4 +28,8 @@ int joueur_gagne(Grille *grille, Joueur *joueur);
 
 int get_score_joueur(Joueur *joueur);
 
+int set_score_joueur(Grille *grille, Joueur *joueur);
+
+void sauvegarder_score(Grille *grille_de_jeu, char *nom_labyrinthe);
+
 #endif

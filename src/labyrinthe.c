@@ -161,11 +161,16 @@ int labyrinthe_complet(Cellule *cellules, Grille *grille){
 
     grille->cases[0][1] = 'o';                                       // Entrée
     grille->cases[grille->hauteur - 1][grille->largeur - 2] = '-';   // Sortie
+    
+    for(int i = 0; i < NOMBRE_SCORE; i++){
+        grille->scores[i] = 0;
+    }
 
     return 1;
 }
 
 void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe){
+
     CREATE_DIR("labyrinthe");
     char chemin_complet[100];
     snprintf(chemin_complet, 100, "labyrinthe/%s", nom_labyrinthe);
@@ -183,11 +188,52 @@ void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe){
         }
         fputc('\n', f);
     }
-    
+
+    // Ajout des top 10 scores (le tableau scores est supposé trié)
+        
+    for (int i = 0; i < NOMBRE_SCORE; i++) {
+        int score = grille->scores[i];
+        if (score > 0){
+            fprintf(f, "%d\n", score);
+        }
+    }
+
     fclose(f);
 }
 
+void sauvegarder_labyrinthe_score(Grille *grille, Grille *grille_jeu, char *nom_labyrinthe){
+
+    CREATE_DIR("labyrinthe");
+    char chemin_complet[100];
+    snprintf(chemin_complet, 100, "labyrinthe/%s", nom_labyrinthe);
+    FILE *f = fopen(chemin_complet, "w");
+    if (!f) {
+        perror("Erreur ouverture fichier de sauvegarde");
+        return;
+    }
+
+    fprintf(f, "%d %d\n", grille->hauteur, grille->largeur);
+
+    for (int i = 0; i < grille->hauteur; i++) {
+        for (int j = 0; j < grille->largeur; j++) {
+            fputc(grille->cases[i][j], f);
+        }
+        fputc('\n', f);
+    }
+
+    for (int i = 0; i < NOMBRE_SCORE; i++) {
+        int score = grille_jeu->scores[i];
+        if (score > 0){
+            fprintf(f, "%d\n", score);
+        }
+    }
+
+    fclose(f);
+
+}
+
 void charger_labyrinthe(Grille *grille, char *nom_labyrinthe){
+
     char chemin_complet[100];
     snprintf(chemin_complet, 100, "labyrinthe/%s", nom_labyrinthe);
     FILE *fichier = fopen(chemin_complet, "r");
@@ -217,6 +263,22 @@ void charger_labyrinthe(Grille *grille, char *nom_labyrinthe){
         grille->cases[i][strcspn(grille->cases[i], "\n")] = 0;
     }
 
+    int score_lu;
+    int scores_trouves = 0;
+
+    while (scores_trouves < NOMBRE_SCORE) {
+        if (fscanf(fichier, "%d", &score_lu) == 1) {
+            grille->scores[scores_trouves] = score_lu;
+            scores_trouves++;
+        } else {
+            break; 
+        }
+    }
+    
+    for (int i = scores_trouves; i < NOMBRE_SCORE; i++) {
+        grille->scores[i] = 0;
+    }
+
     fclose(fichier);
 }
 
@@ -237,4 +299,12 @@ void drop_motif(Grille *grille, char motif){
 
     grille->cases[i_random][j_random] = motif;
 
+}
+
+void consulter_score_labyrinthe(Grille *grille, char *nom_labyrinthe){
+    
+    printf("\nLe Top 10 des scores du labyrinthe %s est:\n", nom_labyrinthe);
+    for(int i = 0; i < NOMBRE_SCORE; i++){
+        printf("Score %d : %d\n", i+1, grille->scores[i]);
+    }
 }

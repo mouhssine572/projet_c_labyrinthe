@@ -10,7 +10,8 @@ int get_action_initial(){
     printf("\n 1 - Créer un labyrinthe\n");
     printf("\n 2 - Charger un labyrinthe\n");
     printf("\n 3 - Jouer\n");
-    printf("\n 4 - Quitter\n");
+    printf("\n 4 - Consulter les scores d'un labyrinthe\n");
+    printf("\n 5 - Quitter\n");
 
     scanf("%d", &choix);
     

@@ -8,6 +8,10 @@ int main(){
     int choix_du_joueur = 0;
     int hauteur_labyrinthe;
     int largeur_labyrinthe;
+
+    int maj_score;
+    char nom_joueur[50]:
+
     char nom_labyrinthe[50];
     Cellule cellules;
     Grille grille;
@@ -83,11 +87,26 @@ int main(){
 
                 jouer_labyrinthe(&grille, &joueur_1);
 
+                maj_score = set_score_joueur(&grille, &joueur_1); 
+                if(maj_score == 1){
+                    sauvegarder_score(&grille, nom_labyrinthe);
+                    printf("\n Nom du joueur : \n");
+                    scanf("%s", &nom_joueur);
+                }
+
                 liberer_grille(&grille);
                 choix_du_joueur = 0;
                 break;
-
             case 4:
+                get_nom_labyrinthe(nom_labyrinthe);
+                charger_labyrinthe(&grille, nom_labyrinthe);
+
+                consulter_score_labyrinthe(&grille, nom_labyrinthe);
+
+                liberer_grille(&grille);
+                choix_du_joueur = 0;
+                break;
+            case 5:
                 printf("Vous quittez le jeu\n");
                 break;
         }

@@ -9,6 +9,8 @@
     #define CREATE_DIR(path) mkdir(path, 0777)
 #endif
 
+#define NOMBRE_SCORE 10
+
 typedef struct {
     int **cellule_matrix;
     int nbr_cellules_horizontales;
@@ -19,6 +21,7 @@ typedef struct {
     char **cases;
     int hauteur;
     int largeur;
+    int scores[NOMBRE_SCORE];
 } Grille;
 
 
@@ -42,8 +45,12 @@ int labyrinthe_complet(Cellule *cellules, Grille *grille);
 
 void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe);
 
+void sauvegarder_labyrinthe_score(Grille *grille, Grille *grille_jeu, char *nom_labyrinthe);
+
 void charger_labyrinthe(Grille *grille, char *nom_labyrinthe);
 
 void drop_motif(Grille *grille, char motif);
+
+void consulter_score_labyrinthe(Grille *grille, char *nom_labyrinthe);
 
 #endif
