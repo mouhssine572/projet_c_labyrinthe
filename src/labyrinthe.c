@@ -201,37 +201,6 @@ void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe){
     fclose(f);
 }
 
-void sauvegarder_labyrinthe_score(Grille *grille, Grille *grille_jeu, char *nom_labyrinthe){
-
-    CREATE_DIR("labyrinthe");
-    char chemin_complet[100];
-    snprintf(chemin_complet, 100, "labyrinthe/%s", nom_labyrinthe);
-    FILE *f = fopen(chemin_complet, "w");
-    if (!f) {
-        perror("Erreur ouverture fichier de sauvegarde");
-        return;
-    }
-
-    fprintf(f, "%d %d\n", grille->hauteur, grille->largeur);
-
-    for (int i = 0; i < grille->hauteur; i++) {
-        for (int j = 0; j < grille->largeur; j++) {
-            fputc(grille->cases[i][j], f);
-        }
-        fputc('\n', f);
-    }
-
-    for (int i = 0; i < NOMBRE_SCORE; i++) {
-        int score = grille_jeu->scores[i];
-        if (score > 0){
-            fprintf(f, "%d\n", score);
-        }
-    }
-
-    fclose(f);
-
-}
-
 void charger_labyrinthe(Grille *grille, char *nom_labyrinthe){
 
     char chemin_complet[100];

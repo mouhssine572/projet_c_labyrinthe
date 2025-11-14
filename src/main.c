@@ -10,7 +10,7 @@ int main(){
     int largeur_labyrinthe;
 
     int maj_score;
-    char nom_joueur[50]:
+    char nom_joueur[50];
 
     char nom_labyrinthe[50];
     Cellule cellules;
@@ -91,7 +91,7 @@ int main(){
                 if(maj_score == 1){
                     sauvegarder_score(&grille, nom_labyrinthe);
                     printf("\n Nom du joueur : \n");
-                    scanf("%s", &nom_joueur);
+                    scanf("%s", nom_joueur);
                 }
 
                 liberer_grille(&grille);
