@@ -17,7 +17,6 @@ void positionner_joueur(Grille *grille, Joueur *joueur){
     int score_joueur = joueur -> score;
     grille -> cases[position_x_joueur][position_y_joueur] = '*';
     joueur -> score = score_joueur + 1;
-
 }
 
 int mouvement_valide(Grille *grille, int x, int y, Joueur *joueur){
