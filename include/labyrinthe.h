@@ -17,12 +17,19 @@ typedef struct {
     int nbr_cellules_verticales;  
 } Cellule;
 
+
+typedef struct {
+    char *name;
+    int score;
+} Top_Player;
+
 typedef struct {
     char **cases;
     int hauteur;
     int largeur;
-    int scores[NOMBRE_SCORE];
+    Top_Player top_scores[NOMBRE_SCORE];
 } Grille;
+
 
 
 void allouer_cellules(Cellule *cellules, int nbr_cellules_verticales, int nbr_cellules_horizontales);

@@ -81,17 +81,17 @@ int main(){
                 break;
 
             case 3:
+                printf("\n Nom du joueur : \n");
+                scanf("%s", nom_joueur);
                 get_nom_labyrinthe(nom_labyrinthe);
                 charger_labyrinthe(&grille, nom_labyrinthe);
                 initialiser_joueur(&joueur_1);
 
                 jouer_labyrinthe(&grille, &joueur_1);
 
-                maj_score = set_score_joueur(&grille, &joueur_1); 
+                maj_score = set_score_joueur(&grille, &joueur_1, nom_joueur); 
                 if(maj_score == 1){
                     sauvegarder_score(&grille, nom_labyrinthe);
-                    printf("\n Nom du joueur : \n");
-                    scanf("%s", nom_joueur);
                 }
 
                 liberer_grille(&grille);

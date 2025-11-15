@@ -163,7 +163,7 @@ int labyrinthe_complet(Cellule *cellules, Grille *grille){
     grille->cases[grille->hauteur - 1][grille->largeur - 2] = '-';   // Sortie
     
     for(int i = 0; i < NOMBRE_SCORE; i++){
-        grille->scores[i] = 0;
+        grille->top_scores[i].score = 0;
     }
 
     return 1;
@@ -188,13 +188,12 @@ void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe){
         }
         fputc('\n', f);
     }
-
-    // Ajout des top 10 scores (le tableau scores est supposé trié)
         
     for (int i = 0; i < NOMBRE_SCORE; i++) {
-        int score = grille->scores[i];
-        if (score > 0){
-            fprintf(f, "%d\n", score);
+        char *name = grille->top_scores[i].name;
+        int score = grille->top_scores[i].score;
+        if (score > 0 && name != NULL && *name != '\0') {
+            fprintf(f, "%d %s\n", score, name);
         }
     }
 
@@ -217,7 +216,6 @@ void charger_labyrinthe(Grille *grille, char *nom_labyrinthe){
         exit(EXIT_FAILURE);
     }
 
-    // Consommer le saut de ligne après les dimensions
     fgetc(fichier);
 
     allouer_grille(grille, grille->hauteur, grille->largeur);
@@ -228,16 +226,17 @@ void charger_labyrinthe(Grille *grille, char *nom_labyrinthe){
             fclose(fichier);
             exit(EXIT_FAILURE);
         }
-        // Optionnel: supprimer le saut de ligne si fgets le capture
         grille->cases[i][strcspn(grille->cases[i], "\n")] = 0;
     }
 
     int score_lu;
     int scores_trouves = 0;
+    char nom_lu[100];
 
     while (scores_trouves < NOMBRE_SCORE) {
-        if (fscanf(fichier, "%d", &score_lu) == 1) {
-            grille->scores[scores_trouves] = score_lu;
+        if (fscanf(fichier, "%d %s", &score_lu, nom_lu) == 2) {
+            grille->top_scores[scores_trouves].score = score_lu;
+            grille->top_scores[scores_trouves].name = strdup(nom_lu);
             scores_trouves++;
         } else {
             break; 
@@ -245,7 +244,8 @@ void charger_labyrinthe(Grille *grille, char *nom_labyrinthe){
     }
     
     for (int i = scores_trouves; i < NOMBRE_SCORE; i++) {
-        grille->scores[i] = 0;
+        grille->top_scores[i].name = NULL;
+        grille->top_scores[i].score = 0;
     }
 
     fclose(fichier);
@@ -274,6 +274,6 @@ void consulter_score_labyrinthe(Grille *grille, char *nom_labyrinthe){
     
     printf("\nLe Top 10 des scores du labyrinthe %s est:\n", nom_labyrinthe);
     for(int i = 0; i < NOMBRE_SCORE; i++){
-        printf("Score %d : %d\n", i+1, grille->scores[i]);
+        printf("Score %d : %d  Joueur : %s \n", i+1, grille->top_scores[i].score, grille->top_scores[i].name);
     }
 }

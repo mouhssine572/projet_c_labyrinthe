@@ -95,14 +95,14 @@ int get_score_joueur(Joueur *joueur){
     return joueur -> score; 
 }
 
-int set_score_joueur(Grille *grille, Joueur *joueur) {
+int set_score_joueur(Grille *grille, Joueur *joueur, char *nom_labyrinthe) {
     
     int score_joueur = get_score_joueur(joueur);
     int maj_scores = 0;
     int index_insertion = -1;
 
     for (int i = 0; i < NOMBRE_SCORE; i++) {
-        int score_actuel = grille->scores[i];
+        int score_actuel = grille->top_scores[i].score;
         if (score_actuel == 0 || score_joueur < score_actuel) {
             index_insertion = i;
             break;
@@ -112,10 +112,11 @@ int set_score_joueur(Grille *grille, Joueur *joueur) {
     if (index_insertion != -1) {
         
         for (int i = NOMBRE_SCORE - 1; i > index_insertion; i--) {
-            grille->scores[i] = grille->scores[i - 1];
+           grille->top_scores[i].score = grille->top_scores[i - 1].score;
         }
         
-        grille->scores[index_insertion] = score_joueur;
+        grille->top_scores[index_insertion].score = score_joueur;
+        grille->top_scores[index_insertion].name = nom_labyrinthe;
         maj_scores = 1;
     }
     
@@ -128,8 +129,8 @@ void sauvegarder_score(Grille *grille_de_jeu, char *nom_labyrinthe) {
     
     charger_labyrinthe(&grille_sauvegarde, nom_labyrinthe); 
 
-    memcpy(grille_sauvegarde.scores, grille_de_jeu->scores, sizeof(grille_sauvegarde.scores));
-    
+    memcpy(grille_sauvegarde.top_scores, grille_de_jeu->top_scores, sizeof(grille_de_jeu->top_scores));
+
     CREATE_DIR("labyrinthe");
     char chemin_complet[100];
     snprintf(chemin_complet, 100, "labyrinthe/%s", nom_labyrinthe);
@@ -150,9 +151,10 @@ void sauvegarder_score(Grille *grille_de_jeu, char *nom_labyrinthe) {
     }
 
     for (int i = 0; i < NOMBRE_SCORE; i++) {
-        int score = grille_sauvegarde.scores[i];
-        if (score >= 1) { 
-                fprintf(f, "%d\n", score);
+        char *name = grille_sauvegarde.top_scores[i].name;
+        int score = grille_sauvegarde.top_scores[i].score;
+        if (score > 0 && name != NULL && *name != '\0') {
+            fprintf(f, "%d %s\n", score, name);
         }
     }
 
