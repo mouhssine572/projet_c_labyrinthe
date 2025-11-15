@@ -8,6 +8,7 @@ int main(){
     int choix_du_joueur = 0;
     int hauteur_labyrinthe;
     int largeur_labyrinthe;
+    int mode_jeu;
 
     int maj_score;
     char nom_joueur[50];
@@ -25,20 +26,10 @@ int main(){
             case 1:
                 printf("Vous voulez créer un labyrinthe\n");
                 
-                printf("\n Hauteur du labyrinthe : \n");
-                scanf("%d", &hauteur_labyrinthe);
+                mode_jeu = get_mode_jeu();
 
-                printf("\n Largeur du labyrinthe (Impaire) : \n");
-                scanf("%d", &largeur_labyrinthe);
+                get_parametres_labyrinthe(&hauteur_labyrinthe, &largeur_labyrinthe, nom_labyrinthe);
 
-                while ((largeur_labyrinthe % 2) != 1){
-                    printf("\n La largeur du labyrinthe doit etre un entier impaire, réssayez : \n");
-                    scanf("%d", &largeur_labyrinthe);
-                }
-
-                printf("\n Nom du labyrinthe : \n");
-                scanf("%s", nom_labyrinthe);
-                
                 int nbr_cellules_verticales = (hauteur_labyrinthe - 1)/ 2;
                 int nbr_cellules_horizontales = (largeur_labyrinthe - 1) / 2;
                 
@@ -62,12 +53,16 @@ int main(){
                 sauvegarder_labyrinthe(&grille, nom_labyrinthe);
                 afficher_labyrinthe(&grille);
 
+                if(mode_jeu == 2){
+                    printf("le mode 2 est en cours de developpement\n");
+                }
+
                 liberer_grille(&grille);
                 liberer_cellules(&cellules);
 
                 choix_du_joueur =  0;
                 break;
-
+                
             case 2:
                 printf("Vous voulez charger un labyrinthe\n");
                 get_nom_labyrinthe(nom_labyrinthe);

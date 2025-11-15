@@ -44,3 +44,50 @@ void get_nom_labyrinthe(char *nom_labyrinthe) {
     scanf("%s", nom_labyrinthe); 
 }
 
+int get_mode_jeu() {
+    int mode;
+
+    printf("Choisissez un mode de jeu :\n");
+    printf("Mode 1 : Facile\n");
+    printf("Mode 2 : Difficile\n");
+
+    do {
+        scanf("%d", &mode);
+    } while (mode != 1 && mode != 2); 
+
+    printf("Mode de jeu choisi : %d\n", mode);
+    return mode;
+}
+
+void get_parametres_labyrinthe(int *hauteur, int *largeur, char *nom){
+    
+    printf("\nHauteur du labyrinthe : ");
+    if (scanf("%d", hauteur) != 1) { 
+        printf("Erreur de saisie pour la hauteur.\n");
+        while (getchar() != '\n');
+        *hauteur = 0; 
+        return; 
+    }
+    
+    do {
+        printf("\nLargeur du labyrinthe (Impaire) : ");
+        
+        if (scanf("%d", largeur) != 1) { 
+            printf("\nErreur: La saisie n'est pas un nombre. Réessayez...\n");
+            while (getchar() != '\n');
+            *largeur = 2; 
+        } 
+
+
+        if ((*largeur % 2) != 1) {
+            printf("\nLa largeur du labyrinthe doit etre un entier impaire, réessayez.\n");
+        }
+        
+    } while ((*largeur % 2) != 1);
+
+
+    printf("\nNom du labyrinthe : ");
+    if (scanf("%s", nom) != 1) { 
+        printf("Erreur de saisie pour le nom.\n");
+    }
+}
