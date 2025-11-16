@@ -25,10 +25,19 @@ void allouer_cellules(Cellule *cellules, int nbr_cellules_verticales, int nbr_ce
 }
 
 void liberer_cellules(Cellule *cellules){
-    for (int i = 0; i < cellules->nbr_cellules_verticales; i++) {
-        free(cellules->cellule_matrix[i]);
+    if (cellules == NULL || cellules->cellule_matrix == NULL) {
+        return; 
     }
+    
+    for (int i = 0; i < cellules->nbr_cellules_verticales; i++) {
+        if (cellules->cellule_matrix[i] != NULL) {
+            free(cellules->cellule_matrix[i]);
+            cellules->cellule_matrix[i] = NULL;
+        }
+    }
+
     free(cellules->cellule_matrix);
+    cellules->cellule_matrix = NULL;
 }
 
 void allouer_grille(Grille *grille, int hauteur_labyrinthe, int largeur_labyrinthe){
@@ -51,10 +60,25 @@ void allouer_grille(Grille *grille, int hauteur_labyrinthe, int largeur_labyrint
 }
 
 void liberer_grille(Grille *grille){
-    for (int i = 0; i <grille->hauteur; i++) {
-        free(grille->cases[i]);
+    if (grille == NULL || grille->cases == NULL) {
+        return;
+    }
+
+    for (int i = 0; i < NOMBRE_SCORE; i++) {
+        if (grille->top_scores[i].name != NULL) {
+            free(grille->top_scores[i].name);
+            grille->top_scores[i].name = NULL;
+        }
+    }
+    
+    for (int i = 0; i < grille->hauteur; i++) {
+        if (grille->cases[i] != NULL) {
+            free(grille->cases[i]);
+            grille->cases[i] = NULL;
+        }
     }
     free(grille->cases);
+    grille->cases = NULL;
 }
 
 void initialiser_cellules(Cellule *cellules){
