@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-// NOTE: Assurez-vous que ce fichier est dans ./include/
 #include "minunit.h" 
 #include "jouer.h" 
 
@@ -11,16 +10,10 @@ Joueur *j = NULL;
 const int H = 3; 
 const int L = 5; 
 
-// NOTE: Ces motifs doivent être définis dans jouer.h pour éviter des avertissements de type
-// Exemple: #define MOTIF_KEY 'K'
-// Exemple: #define MOTIF_TRAP 'T'
-
-
 extern void initialiser_joueur(Joueur *joueur);
 extern void positionner_joueur(Grille *grille, Joueur *joueur);
 extern int mouvement_valide(Grille *grille, int x, int y, Joueur *joueur);
 extern void mouvement_joueur(Grille *grille, Joueur *joueur);
-
 
 void test_setup(void) {
 
@@ -57,18 +50,15 @@ void test_teardown(void) {
 
 
 MU_TEST(test_positionner_joueur) {
-    // Setup place le joueur à (0, 1) avec score = 0
     
     positionner_joueur(g, j); 
 
-    // CORRIGÉ: Utilisation de mu_assert_int_eq pour les comparaisons de valeurs
     mu_assert_int_eq('*', g->cases[0][1]);
     mu_assert_int_eq(1, j->score);
 }
 
 MU_TEST(test_mouvement_valide) {
 
-    // CORRIGÉ: Utilisation de mu_assert_int_eq au lieu de mu_check
     mu_assert_int_eq(0, mouvement_valide(g, 0, 0, j)); // Mouvement invalide (mur)
     mu_assert_int_eq(1, mouvement_valide(g, 1, 1, j)); // Mouvement valide (case vide)
     
@@ -84,7 +74,6 @@ MU_TEST(test_mouvement_valide) {
     g->cases[1][3] = MOTIF_TRAP; 
     mouvement_valide(g, 1, 3, j);
 
-    // CORRIGÉ: Utilisation de mu_assert_int_eq
     mu_assert_int_eq(score_initial + 6, j->score);
 }
 
@@ -97,7 +86,6 @@ MU_TEST(test_mouvement_joueurt) {
     
     mouvement_joueur(g, j);
 
-    // CORRIGÉ: Utilisation de mu_assert_int_eq pour les comparaisons de caractères
     mu_assert_int_eq(' ', g->cases[0][1]); // L'ancienne case (0, 1) doit être vide
     mu_assert_int_eq('*', g->cases[1][1]); // La nouvelle case (1, 1) doit être '*'
     mu_assert_int_eq(1, j->x);             // Coordonnée X du joueur doit être 1
@@ -115,7 +103,6 @@ MU_TEST_SUITE(test_suite) {
     MU_RUN_TEST(test_mouvement_joueurt); 
 }
 
-// CORRIGÉ: Les noms des paramètres sont masqués pour éviter les warnings [-Wunused-parameter]
 int main(int /*argc*/, char * /*argv*/ []) {
     MU_RUN_SUITE(test_suite);
     MU_REPORT();

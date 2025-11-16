@@ -52,7 +52,6 @@ MU_TEST(test_initialisation_grille_et_cellules) {
     mu_assert_int_eq(H_GRID, g->hauteur);
     mu_assert_int_eq(L_GRID, g->largeur);
     
-    // Utilisation des caractères littéraux (' ') et ('#')
     mu_assert_int_eq(' ', g->cases[1][1]);
     mu_assert_int_eq('#', g->cases[2][1]); 
 }
@@ -89,7 +88,6 @@ MU_TEST(test_creation_de_chemin_et_fusion) {
     // Après une seule étape, le labyrinthe ne doit pas être complet (il doit rester des groupes différents)
     mu_check(groupes_differents);
 }
-
 
 MU_TEST(test_etat_complet_et_finalisation) {
 
@@ -170,7 +168,7 @@ MU_TEST_SUITE(test_suite) {
     MU_RUN_TEST(test_chargement_persistence); 
 }
 
-int main() {
+int main(int /*argc*/, char * /*argv*/ []) {
     MU_RUN_SUITE(test_suite);
     MU_REPORT();
     return MU_EXIT_CODE;
