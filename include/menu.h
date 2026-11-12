@@ -5,6 +5,10 @@
 #define TAILLE_NOM 50
 #define TAILLE_NOM_MAX 49
 
+/* Fichier qui garde les noms des joueurs d'une session à l'autre. */
+#define FICHIER_JOUEURS "joueurs.txt"
+#define NBR_JOUEURS_MAX 20
+
 /* Dimensions autorisées pour un labyrinthe (valeurs impaires). */
 #define DIMENSION_MIN 3
 #define DIMENSION_MAX 201
@@ -52,8 +56,25 @@ int labyrinthe_disponible(void);
 int get_nom_labyrinthe(char *nom_labyrinthe);
 
 /**
+ * @brief Charge les noms des joueurs déjà connus, du plus récent au plus ancien.
+ * * Les noms viennent du fichier FICHIER_JOUEURS, puis des classements des labyrinthes
+ *   existants (pour retrouver les joueurs des sessions précédentes). Sans doublon.
+ * @param noms Tableau où ranger les noms.
+ * @return int Le nombre de noms trouvés (au plus NBR_JOUEURS_MAX).
+ */
+int charger_noms_joueurs(char noms[NBR_JOUEURS_MAX][TAILLE_NOM]);
+
+/**
+ * @brief Enregistre un nom dans FICHIER_JOUEURS en tête de liste (le plus récent en premier).
+ * @param nom Nom du joueur.
+ */
+void enregistrer_nom_joueur(const char *nom);
+
+/**
  * @brief Demande le nom du joueur.
- * @param nom_joueur Buffer d'au moins TAILLE_NOM octets où stocker le nom saisi.
+ * * Les joueurs déjà connus (sessions précédentes) sont listés avec un numéro :
+ *   on peut taper ce numéro pour reprendre un nom, ou taper un nouveau nom.
+ * @param nom_joueur Buffer d'au moins TAILLE_NOM octets où stocker le nom choisi.
  * @return int 0 si l'utilisateur a demandé à revenir au menu (MOT_RETOUR), 1 sinon.
  */
 int get_nom_joueur(char *nom_joueur);

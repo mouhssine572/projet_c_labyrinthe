@@ -22,6 +22,7 @@ void test_setup(void) {
     g = (Grille*)malloc(sizeof(Grille));
     g->hauteur = H;
     g->largeur = L;
+    g->mode = MODE_FACILE;
     g->cases = (char**)malloc(H * sizeof(char*));
     for (int i = 0; i < H; i++) {
         g->cases[i] = (char*)malloc(L * sizeof(char));
@@ -203,7 +204,7 @@ MU_TEST(test_afficher_jeu_restaure_grille) {
     fantome.y = 3;
     fantome.actif = 1;
 
-    afficher_jeu(g, monstres, 1);
+    afficher_jeu(g, j, monstres, 1);
     mu_assert_int_eq('#', g->cases[1][3]);              // Le mur sous le fantôme est restauré
 }
 
@@ -215,18 +216,22 @@ MU_TEST(test_set_score_joueur) {
     }
 
     j->score = 20;
-    mu_assert_int_eq(1, set_score_joueur(g, j, "Bob"));
+    mu_assert_int_eq(1, set_score_joueur(g, j, "Bob"));   // 1er
     j->score = 10;
-    mu_assert_int_eq(1, set_score_joueur(g, j, "Alice"));
+    mu_assert_int_eq(1, set_score_joueur(g, j, "Alice")); // 1re, Bob passe 2e
+    j->score = 15;
+    mu_assert_int_eq(2, set_score_joueur(g, j, "Carl"));  // Entre Alice et Bob : 2e
 
     // Classement trié du meilleur (plus petit) au moins bon
     mu_assert_int_eq(10, g->top_scores[0].score);
     mu_assert_string_eq("Alice", g->top_scores[0].name);
-    mu_assert_int_eq(20, g->top_scores[1].score);
-    mu_assert_string_eq("Bob", g->top_scores[1].name);
+    mu_assert_int_eq(15, g->top_scores[1].score);
+    mu_assert_string_eq("Carl", g->top_scores[1].name);
+    mu_assert_int_eq(20, g->top_scores[2].score);
+    mu_assert_string_eq("Bob", g->top_scores[2].name);
 
     // Un classement plein refuse un score moins bon que le dernier
-    for (int i = 2; i < NOMBRE_SCORE; i++) {
+    for (int i = 3; i < NOMBRE_SCORE; i++) {
         j->score = 20 + i;
         set_score_joueur(g, j, "Autre");
     }
@@ -237,6 +242,89 @@ MU_TEST(test_set_score_joueur) {
         free(g->top_scores[i].name);
         g->top_scores[i].name = NULL;
     }
+}
+
+MU_TEST(test_piege_reste_bonus_disparait) {
+    // Joueur en (1,1), piège en (1,2) : il y passe puis repart, le piège reste
+    j->x = 1;
+    j->y = 1;
+    g->cases[1][2] = MOTIF_TRAP;
+
+    simuler_entree("dq");
+    mu_assert_int_eq(MVT_JOUE, mouvement_joueur(g, j));
+    mu_assert_int_eq(1 + PENALITE_PIEGE, j->score);
+    mu_assert_int_eq(MVT_JOUE, mouvement_joueur(g, j));
+    mu_assert_int_eq(MOTIF_TRAP, g->cases[1][2]);         // Le piège est toujours là
+
+    // Même chose avec un bonus : il disparaît
+    g->cases[1][2] = MOTIF_BOOST;
+    j->score = 20;
+    simuler_entree("dq");
+    mouvement_joueur(g, j);
+    mu_assert_int_eq(20 - GAIN_BONUS + 1, j->score);
+    mouvement_joueur(g, j);
+    mu_assert_int_eq(MOTIF_VIDE, g->cases[1][2]);         // Le bonus a été consommé
+}
+
+MU_TEST(test_sortie_fermee_sans_cle) {
+    g->cases[1][2] = MOTIF_SORTIE;
+
+    j->have_key = 0;
+    mu_assert_int_eq(0, mouvement_valide(g, 1, 2, j));    // Pas de clé : porte fermée
+    j->have_key = 1;
+    mu_assert_int_eq(1, mouvement_valide(g, 1, 2, j));    // Avec la clé : la porte s'ouvre
+}
+
+MU_TEST(test_joueur_gagne) {
+    // La sortie de la grille 3x5 est en (2,3)
+    g->cases[2][3] = MOTIF_JOUEUR;
+
+    j->have_key = 0;
+    mu_assert_int_eq(0, joueur_gagne(g, j));
+    j->have_key = 1;
+    mu_assert_int_eq(1, joueur_gagne(g, j));
+}
+
+MU_TEST(test_ogre_chasseur) {
+    // Couloir en L : l'ogre en (1,5) doit prendre le chemin qui mène au joueur en (5,1)
+    const char *plan[] = {
+        "#######",
+        "#     #",
+        "# ### #",
+        "# # # #",
+        "# ### #",
+        "#     #",
+        "#######",
+    };
+    Grille couloir;
+    couloir.hauteur = 7;
+    couloir.largeur = 7;
+    couloir.cases = malloc(7 * sizeof(char*));
+    for (int i = 0; i < 7; i++) {
+        couloir.cases[i] = malloc(7);
+        memcpy(couloir.cases[i], plan[i], 7);
+    }
+
+    Monstre ogre;
+    initialiser_monstre(&ogre, MOTIF_OGRE, 0);
+    ogre.chasseur = 1;
+    ogre.actif = 1;
+    ogre.x = 1;
+    ogre.y = 2;
+    j->x = 3;
+    j->y = 1;
+
+    // Le joueur est à 3 cases par la gauche : l'ogre va vers (1,1) à chaque fois
+    deplacer_monstre(&couloir, &ogre, j);
+    mu_assert_int_eq(1, ogre.x);
+    mu_assert_int_eq(1, ogre.y);
+    deplacer_monstre(&couloir, &ogre, j);
+    mu_assert_int_eq(2, ogre.x);
+    mu_assert_int_eq(1, ogre.y);
+    mu_assert_int_eq(1, deplacer_monstre(&couloir, &ogre, j)); // Il attrape le joueur
+
+    for (int i = 0; i < 7; i++) free(couloir.cases[i]);
+    free(couloir.cases);
 }
 
 
@@ -256,6 +344,10 @@ MU_TEST_SUITE(test_suite) {
     MU_RUN_TEST(test_placer_monstre);
     MU_RUN_TEST(test_afficher_jeu_restaure_grille);
     MU_RUN_TEST(test_set_score_joueur);
+    MU_RUN_TEST(test_piege_reste_bonus_disparait);
+    MU_RUN_TEST(test_sortie_fermee_sans_cle);
+    MU_RUN_TEST(test_joueur_gagne);
+    MU_RUN_TEST(test_ogre_chasseur);
 }
 
 int main(void) {

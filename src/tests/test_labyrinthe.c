@@ -156,6 +156,7 @@ MU_TEST(test_chargement_persistence) {
     mu_assert_int_eq(0, strcmp("Alpha", g_loaded.top_scores[0].name)); 
 
     mu_check(g_loaded.top_scores[1].name == NULL); // Emplacements vides initialisés
+    mu_assert_int_eq(MODE_FACILE, g_loaded.mode);   // Ancien format sans mode : Facile
 
     liberer_grille(&g_loaded);
 }
@@ -189,6 +190,7 @@ MU_TEST(test_sauvegarde_puis_chargement) {
     g->top_scores[0].name = strdup("Zoe");
     g->top_scores[0].score = 42;
     g->cases[1][1] = '$';
+    g->mode = MODE_DIFFICILE;
 
     sauvegarder_labyrinthe(g, TEST_LABY_FILE);
 
@@ -200,8 +202,36 @@ MU_TEST(test_sauvegarde_puis_chargement) {
     mu_assert_int_eq('#', g_relu.cases[H_GRID - 1][L_GRID - 1]); // Dernière case bien lue
     mu_assert_int_eq(42, g_relu.top_scores[0].score);
     mu_assert_string_eq("Zoe", g_relu.top_scores[0].name);
+    mu_assert_int_eq(MODE_DIFFICILE, g_relu.mode);  // Le mode est conservé
 
     liberer_grille(&g_relu);
+}
+
+MU_TEST(test_placer_motifs) {
+    // Labyrinthe complet : on ouvre tous les murs intérieurs pour avoir de la place
+    for (int i = 1; i < H_GRID - 1; i++) {
+        for (int j = 1; j < L_GRID - 1; j++) {
+            g->cases[i][j] = ' ';
+        }
+    }
+
+    placer_motifs(g, MODE_DIFFICILE);
+    mu_assert_int_eq(MODE_DIFFICILE, g->mode);
+    mu_assert_int_eq(1, compter_motif(g, '$'));     // Une seule clé
+    mu_check(compter_motif(g, '@') > compter_motif(g, '&')); // Plus de pièges que de bonus
+}
+
+MU_TEST(test_drop_motif_sans_place) {
+    // Grille 3x3 : une seule case libre
+    Grille petite;
+    allouer_grille(&petite, 3, 3);
+    for (int i = 0; i < 3; i++) memset(petite.cases[i], '#', 3);
+    petite.cases[1][1] = ' ';
+
+    mu_assert_int_eq(1, drop_motif(&petite, '$'));
+    mu_assert_int_eq(0, drop_motif(&petite, '@'));   // Plus de place : pas de boucle infinie
+
+    liberer_grille(&petite);
 }
 
 
@@ -215,6 +245,8 @@ MU_TEST_SUITE(test_suite) {
     MU_RUN_TEST(test_chargement_fichier_absent);
     MU_RUN_TEST(test_allouer_grille_initialise_scores);
     MU_RUN_TEST(test_sauvegarde_puis_chargement);
+    MU_RUN_TEST(test_placer_motifs);
+    MU_RUN_TEST(test_drop_motif_sans_place);
 }
 
 int main(void) {

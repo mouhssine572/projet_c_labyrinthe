@@ -83,10 +83,114 @@ int labyrinthe_disponible(void) {
     return trouve;
 }
 
+/* Ajoute un nom à la liste s'il n'y est pas déjà. Renvoie le nouveau nombre de noms. */
+static int ajouter_nom(char noms[NBR_JOUEURS_MAX][TAILLE_NOM], int nbr_noms, const char *nom) {
+    if (nom == NULL || *nom == '\0' || nbr_noms >= NBR_JOUEURS_MAX) return nbr_noms;
+    for (int i = 0; i < nbr_noms; i++) {
+        if (strcmp(noms[i], nom) == 0) return nbr_noms;
+    }
+    snprintf(noms[nbr_noms], TAILLE_NOM, "%s", nom);
+    return nbr_noms + 1;
+}
+
+int charger_noms_joueurs(char noms[NBR_JOUEURS_MAX][TAILLE_NOM]) {
+    int nbr_noms = 0;
+    char nom_lu[TAILLE_NOM];
+
+    // 1) Les noms déjà utilisés, du plus récent au plus ancien
+    FILE *f = fopen(FICHIER_JOUEURS, "r");
+    if (f) {
+        while (fscanf(f, "%" STR(TAILLE_NOM_MAX) "s", nom_lu) == 1) {
+            nbr_noms = ajouter_nom(noms, nbr_noms, nom_lu);
+        }
+        fclose(f);
+    }
+
+    // 2) Les joueurs présents dans les classements des labyrinthes (anciennes sessions)
+    DIR *d = opendir("labyrinthe");
+    if (d) {
+        struct dirent *dir;
+        while ((dir = readdir(d)) != NULL) {
+            if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0) continue;
+            Grille grille;
+            if (!charger_labyrinthe(&grille, dir->d_name)) continue;
+            for (int i = 0; i < NOMBRE_SCORE; i++) {
+                nbr_noms = ajouter_nom(noms, nbr_noms, grille.top_scores[i].name);
+            }
+            liberer_grille(&grille);
+        }
+        closedir(d);
+    }
+
+    return nbr_noms;
+}
+
+void enregistrer_nom_joueur(const char *nom) {
+    char anciens[NBR_JOUEURS_MAX][TAILLE_NOM];
+    int nbr_anciens = 0;
+    char nom_lu[TAILLE_NOM];
+
+    FILE *f = fopen(FICHIER_JOUEURS, "r");
+    if (f) {
+        while (fscanf(f, "%" STR(TAILLE_NOM_MAX) "s", nom_lu) == 1) {
+            if (strcmp(nom_lu, nom) != 0) {
+                nbr_anciens = ajouter_nom(anciens, nbr_anciens, nom_lu);
+            }
+        }
+        fclose(f);
+    }
+
+    f = fopen(FICHIER_JOUEURS, "w");
+    if (!f) return; // Pas grave : le nom ne sera simplement pas proposé la prochaine fois
+    fprintf(f, "%s\n", nom);
+    for (int i = 0; i < nbr_anciens && i < NBR_JOUEURS_MAX - 1; i++) {
+        fprintf(f, "%s\n", anciens[i]);
+    }
+    fclose(f);
+}
+
+/* Indique si le mot ne contient que des chiffres (un numéro de la liste). */
+static int est_numero(const char *mot) {
+    if (*mot == '\0') return 0;
+    for (; *mot; mot++) {
+        if (*mot < '0' || *mot > '9') return 0;
+    }
+    return 1;
+}
+
 int get_nom_joueur(char *nom_joueur) {
-    printf("\n Nom du joueur (" MOT_RETOUR " pour revenir au menu) : \n");
-    lire_mot(nom_joueur);
-    return !est_retour(nom_joueur);
+    char noms[NBR_JOUEURS_MAX][TAILLE_NOM];
+    int nbr_noms = charger_noms_joueurs(noms);
+
+    if (nbr_noms > 0) {
+        printf("\n Joueurs déjà connus :\n");
+        for (int i = 0; i < nbr_noms; i++) {
+            printf("   %d - %s\n", i + 1, noms[i]);
+        }
+        printf("\n Tapez le numéro de votre nom, ou un nouveau nom (" MOT_RETOUR " pour revenir au menu) : \n");
+    } else {
+        printf("\n Nom du joueur (" MOT_RETOUR " pour revenir au menu) : \n");
+    }
+
+    while (1) {
+        lire_mot(nom_joueur);
+        if (est_retour(nom_joueur)) return 0;
+
+        if (nbr_noms > 0 && est_numero(nom_joueur)) {
+            int numero = atoi(nom_joueur);
+            if (numero >= 1 && numero <= nbr_noms) {
+                snprintf(nom_joueur, TAILLE_NOM, "%s", noms[numero - 1]);
+            } else {
+                printf("Numéro invalide, entrez un numéro entre 1 et %d ou un nom : ", nbr_noms);
+                continue;
+            }
+        }
+        break;
+    }
+
+    printf("Bonjour %s !\n", nom_joueur);
+    enregistrer_nom_joueur(nom_joueur);
+    return 1;
 }
 
 int get_nom_labyrinthe(char *nom_labyrinthe) {
@@ -120,8 +224,8 @@ int get_mode_jeu() {
     int mode;
 
     printf("Choisissez un mode de jeu :\n");
-    printf("Mode 1 : Facile\n");
-    printf("Mode 2 : Difficile\n");
+    printf("Mode 1 : Facile    (ogre qui erre au hasard, carte visible)\n");
+    printf("Mode 2 : Difficile (brouillard, ogre chasseur, plus de pièges et moins de bonus)\n");
     printf("%d : Revenir au menu\n", CHOIX_RETOUR);
 
     mode = lire_entier();
@@ -179,7 +283,8 @@ void afficher_regles(void) {
     printf("   avec le score le plus bas possible, sans vous faire attraper par l'ogre.\n");
 
     printf("\n Déplacements :\n");
-    printf("   z : haut    s : bas    q : gauche    d : droite\n");
+    printf("   z : haut    s : bas    q : gauche    d : droite  (ou les flèches du clavier)\n");
+    printf("   Pas besoin d'appuyer sur Entrée : le joueur bouge dès que la touche est pressée.\n");
     printf("   %c : abandonner la partie et revenir au menu\n", MVT_TOUCHE_RETOUR);
 
     printf("\n Les caractères du labyrinthe :\n");
@@ -188,13 +293,20 @@ void afficher_regles(void) {
     printf("   -  Sortie : ne s'ouvre que si vous avez la clé.\n");
     printf("   *  Vous (le joueur).\n");
     printf("   %c  Clé : permet d'ouvrir la porte de sortie (aucun effet sur le score).\n", MOTIF_KEY);
-    printf("   %c  Piège : ajoute 6 points au score.\n", MOTIF_TRAP);
-    printf("   %c  Bonus : retire 6 points au score (minimum 0).\n", MOTIF_BOOST);
+    printf("   %c  Piège : ajoute %d points au score. Il reste en place : il pique à chaque passage.\n",
+           MOTIF_TRAP, PENALITE_PIEGE);
+    printf("   %c  Bonus : retire %d points au score (minimum 0). Il disparaît une fois pris.\n",
+           MOTIF_BOOST, GAIN_BONUS);
     printf("   %c  Ogre : se déplace d'une case au hasard à chaque tour, sans traverser les murs.\n", MOTIF_OGRE);
+    printf("      En mode Difficile, il vous chasse dès que vous êtes à moins de %d cases.\n", RAYON_CHASSE);
     printf("      S'il vous attrape, la partie est perdue et votre score n'est pas enregistré.\n");
     printf("   %c  Fantôme : se déplace d'une case au hasard à chaque tour et traverse les murs.\n", MOTIF_FANTOME);
     printf("      S'il vous attrape, la partie continue mais votre score est doublé ;\n");
     printf("      le fantôme réapparaît alors ailleurs dans le labyrinthe.\n");
+
+    printf("\n Mode Difficile :\n");
+    printf("   Brouillard : vous ne voyez que les cases à %d de distance autour de vous.\n", RAYON_BROUILLARD);
+    printf("   Ogre chasseur, plus de pièges et moins de bonus.\n");
 
     printf("\n Score :\n");
     printf("   Chaque déplacement ajoute 1 point (même contre un mur).\n");

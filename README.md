@@ -12,21 +12,29 @@ Ce projet est un jeu de labyrinthe interactif développé en C. Le programme per
 - Labyrinthes sauvegardés pour rejouer ultérieurement
 
 ### 2. **Gameplay**
-- Déplacement du joueur avec les touches `z` (haut), `q` (gauche), `d` (droite), `s` (bas)
+- Déplacement du joueur avec les touches `z` (haut), `q` (gauche), `d` (droite), `s` (bas) ou les flèches, **sans appuyer sur Entrée** (`_getch()` sous Windows, `termios` sous Linux/macOS)
+- L'écran est effacé à chaque tour : la carte reste en place, avec le score, la clé, la légende et le dernier événement affichés dessous
+- Affichage en couleur (codes ANSI) : `G` rouge, `F` cyan, `$` jaune, `@` magenta, `&` vert
 - Système de scoring basé sur le nombre de mouvements
 - Objectif : récupérer la clé ($) et atteindre la sortie (-)
 
 ### 3. **Motifs et Pièges**
-- **Clé ($)** : À récupérer pour pouvoir sortir du labyrinthe
-- **Ogre (G)** : Se déplace d'une case au hasard à chaque tour (sans traverser les murs) ; s'il attrape le joueur, la partie est perdue
+- **Clé ($)** : Une seule par labyrinthe ; à récupérer pour pouvoir sortir
+- **Ogre (G)** : Se déplace d'une case au hasard à chaque tour (sans traverser les murs) ; s'il attrape le joueur, la partie est perdue. En mode Difficile, il **chasse** le joueur (plus court chemin) dès que celui-ci est à moins de 10 cases de couloir
 - **Fantôme (F)** : Se déplace d'une case au hasard à chaque tour et traverse les murs ; s'il attrape le joueur, la partie continue mais le score est doublé, puis le fantôme réapparaît ailleurs
-- **Pièges (@)** : Ajoutent 6 points de pénalité au score
-- **Bonus (&)** : Réduisent la pénalité en retirant 6 points (minimum 0)
+- **Pièges (@)** : Ajoutent 6 points de pénalité au score. **Ils restent en place** et pénalisent à chaque passage
+- **Bonus (&)** : Retirent 6 points (minimum 0). **Ils disparaissent** une fois ramassés (usage unique)
 
-### 4. **Gestion des Scores**
+### 4. **Modes de jeu**
+Le mode est choisi à la création et enregistré dans le fichier du labyrinthe.
+- **Facile** : carte entièrement visible, ogre qui erre au hasard
+- **Difficile** : brouillard (seules les cases à 3 de distance autour du joueur sont visibles), ogre chasseur, deux fois plus de pièges et deux fois moins de bonus
+
+### 5. **Gestion des Scores**
 - Top 10 des meilleurs scores enregistrés par labyrinthe
 - Persistent : les scores sont sauvegardés dans les fichiers de labyrinthe
 - Affichage du top des scores
+- À la fin d'une partie gagnée, la place obtenue est affichée (« Vous êtes 3e sur ce labyrinthe ! »)
 
 ## 📁 Structure du Projet
 
@@ -38,12 +46,14 @@ projet_c/
 │   ├── labyrinthe.h      # Interface du système de labyrinthe
 │   ├── jouer.h           # Interface du système de joueur
 │   ├── menu.h            # Interface du menu
+│   ├── terminal.h        # Saisie sans Entrée, effacement de l'écran, couleurs
 │   └── minunit.h         # Framework de tests unitaires
 ├── src/
 │   ├── main.c            # Point d'entrée du programme
 │   ├── labyrinthe.c      # Implémentation du labyrinthe
 │   ├── jouer.c           # Implémentation du joueur et gameplay
 │   ├── menu.c            # Implémentation du menu
+│   ├── terminal.c        # Gestion du terminal (Windows / Linux / macOS)
 │   └── tests/
 │       ├── test_labyrinthe.c  # Tests du système de labyrinthe
 │       └── test_jouer.c       # Tests du système de joueur
@@ -93,7 +103,7 @@ Au lancement du programme, vous avez 6 options :
 2. **Charger un labyrinthe** : Chargez un labyrinthe existant pour le visualiser
 3. **Jouer** : Jouez dans un labyrinthe existant
 4. **Consulter les scores** : Affichez le top 10 d'un labyrinthe
-5. **Consulter les règles du jeu** : Affiche le but du jeu et la signification de chaque caractère (`#`, `o`, `-`, `*`, `$`, `@`, `&`, `G`, `F`)
+5. **Consulter les règles du jeu** : Affiche le but du jeu et la signification de chaque caractère (`#`, `o`, `-`, `*`, `$`, `@`, `&`, `B`, `T`, `G`, `F`)
 6. **Quitter** : Quittez le programme
 
 À chaque question (mode, dimensions, nom du joueur, nom du labyrinthe), tapez `0` pour revenir au menu principal. Pendant une partie, la touche `0` abandonne la partie et ramène au menu.
@@ -101,16 +111,16 @@ Au lancement du programme, vous avez 6 options :
 ## 🎮 Comment Jouer
 
 1. Sélectionnez l'option **3 - Jouer** du menu principal
-2. Entrez votre nom de joueur
+2. Entrez votre nom de joueur : les joueurs déjà connus (y compris ceux des sessions précédentes) sont listés, tapez leur numéro pour reprendre un nom ou tapez un nouveau nom
 3. Choisissez le labyrinthe dans lequel vous voulez jouer
-4. Utilisez les touches de déplacement :
-   - `z` : Avancer (haut)
-   - `q` : Aller à gauche
-   - `d` : Aller à droite
-   - `s` : Reculer (bas)
+4. Utilisez les touches de déplacement (pas besoin d'appuyer sur Entrée) :
+   - `z` ou ↑ : Avancer (haut)
+   - `q` ou ← : Aller à gauche
+   - `d` ou → : Aller à droite
+   - `s` ou ↓ : Reculer (bas)
    - `0` : Abandonner et revenir au menu
 5. Ramassez la clé ($) et atteignez la sortie (-) pour gagner
-6. Votre score s'affiche après chaque mouvement
+6. Votre score et la clé s'affichent sous la carte
 
 ## 📊 Système de Scoring
 
@@ -136,7 +146,8 @@ Le projet inclut une suite de tests unitaires complète utilisant le framework *
 **Test du joueur** (`test_jouer.c`) :
 - Positionnement du joueur
 - Validation des mouvements
-- Gestion des motifs (clé, pièges, bonus)
+- Gestion des motifs (clé, pièges qui restent, bonus consommés)
+- Ogre chasseur, place dans le classement
 
 ### Exécuter les Tests
 
@@ -151,9 +162,10 @@ Cela compilera et exécutera les deux suites de tests.
 - Les dimensions du labyrinthe (hauteur et largeur) doivent être impaires, entre 3 et 201 ; le programme redemande tant que la saisie est invalide
 - Une touche invalide pendant la partie ne déplace pas le joueur et ne compte pas de point
 - Fermer l'entrée (`Ctrl+D` sous Linux, `Ctrl+Z` puis Entrée sous Windows) abandonne la partie / quitte le programme
-- Chaque fichier de labyrinthe stocke la grille et le top 10 des scores
+- Chaque fichier de labyrinthe stocke la grille, le mode et le top 10 des scores ; la première ligne est `hauteur largeur mode` (les anciens fichiers sans mode sont chargés en mode Facile)
 - Les labyrinthes sont sauvegardés dans le dossier `labyrinthe/`
-- Le mode 2 (Difficile) est actuellement en cours de développement
+- Les noms des joueurs sont mémorisés dans `joueurs.txt` (le plus récent en premier) pour pouvoir les réutiliser d'une session à l'autre ; les noms présents dans les classements des labyrinthes sont aussi proposés
+- Les couleurs nécessitent un terminal compatible ANSI (Windows 10+, Linux, macOS)
 
 ## 👨‍💻 Auteur
 

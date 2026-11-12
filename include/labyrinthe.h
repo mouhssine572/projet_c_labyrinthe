@@ -11,6 +11,22 @@
 
 #define NOMBRE_SCORE 10
 
+/* Caractères du labyrinthe. */
+#define MOTIF_MUR '#'
+#define MOTIF_VIDE ' '
+#define MOTIF_ENTREE 'o'
+#define MOTIF_SORTIE '-'
+#define MOTIF_JOUEUR '*'
+#define MOTIF_KEY '$'
+#define MOTIF_TRAP '@'
+#define MOTIF_BOOST '&'
+#define MOTIF_OGRE 'G'
+#define MOTIF_FANTOME 'F'
+
+/* Modes de jeu (enregistrés dans le fichier du labyrinthe). */
+#define MODE_FACILE 1
+#define MODE_DIFFICILE 2
+
 typedef struct {
     int **cellule_matrix;
     int nbr_cellules_horizontales;
@@ -26,6 +42,7 @@ typedef struct {
     char **cases;
     int hauteur;
     int largeur;
+    int mode;      /* MODE_FACILE ou MODE_DIFFICILE */
     Top_Player top_scores[NOMBRE_SCORE];
 } Grille;
 
@@ -49,7 +66,7 @@ void liberer_cellules(Cellule *cellules);
 /**
  * @brief Alloue dynamiquement la grille (matrice de caractères) du labyrinthe.
  * Cette fonction configure les dimensions réelles (cases), alloue la mémoire pour la grille affichable du labyrinthe
- * et initialise un classement vide (noms à NULL, scores à 0).
+ * et initialise un classement vide (noms à NULL, scores à 0) et le mode (facile).
  * @param grille Pointeur vers la structure Grille à allouer.
  * @param hauteur_labyrinthe Hauteur totale de la grille (lignes).
  * @param largeur_labyrinthe Largeur totale de la grille (colonnes).
@@ -79,10 +96,16 @@ void initialiser_cellules(Cellule *cellules);
 void initialiser_grille(Grille *grille, Cellule *cellules);
 
 /**
- * @brief Affiche le labyrinthe case par case sur la console.
+ * @brief Affiche le labyrinthe case par case sur la console, en couleur.
  * @param grille Pointeur vers la structure Grille à afficher.
  */
 void afficher_labyrinthe(Grille *grille);
+
+/**
+ * @brief Affiche une case du labyrinthe avec sa couleur.
+ * @param c Caractère à afficher.
+ */
+void afficher_case(char c);
 
 /**
  * @brief Exécute une étape de construction du labyrinthe (algorithme de fusion).
@@ -105,7 +128,7 @@ int labyrinthe_complet(Cellule *cellules, Grille *grille);
 
 /**
  * @brief Sauvegarde la grille du labyrinthe et les scores associés dans un fichier.
- * * Le format de sauvegarde inclut d'abord les dimensions, puis la grille de caractères,
+ * * Le format de sauvegarde inclut d'abord les dimensions et le mode, puis la grille de caractères,
  * et enfin la liste des meilleurs scores (score et nom du joueur).
  * * @param grille Pointeur vers la Grille à sauvegarder.
  * @param nom_labyrinthe Nom du fichier de sauvegarde.
@@ -114,8 +137,8 @@ void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe);
 
 /**
  * @brief Charge un labyrinthe et ses meilleurs scores à partir d'un fichier.
- * * Cette fonction lit les dimensions, alloue la mémoire pour la grille, charge les caractères
- * de la grille, puis lit la liste des scores.
+ * * Cette fonction lit les dimensions et le mode (facile si absent, pour les anciens fichiers),
+ * alloue la mémoire pour la grille, charge les caractères de la grille, puis lit la liste des scores.
  * * @param grille Pointeur vers la structure Grille où charger les données.
  * @param nom_labyrinthe Nom du fichier de sauvegarde à charger.
  * @return int 1 si le chargement a réussi, 0 sinon (fichier absent ou invalide ; rien n'est alloué).
@@ -127,8 +150,25 @@ int charger_labyrinthe(Grille *grille, char *nom_labyrinthe);
  * @brief Place un motif (clé, piège, boost) aléatoirement dans un passage libre (' ') de la grille.
  * * @param grille Pointeur vers la Grille où placer le motif.
  * @param motif Le caractère représentant le motif à placer (e.g., MOTIF_KEY, MOTIF_TRAP).
+ * @return int 1 si le motif a été placé, 0 s'il ne reste aucune case libre.
  */
-void drop_motif(Grille *grille, char motif);
+int drop_motif(Grille *grille, char motif);
+
+/**
+ * @brief Compte le nombre de cases de la grille contenant un caractère donné.
+ * @param grille Pointeur vers la Grille.
+ * @param motif Caractère à compter.
+ * @return int Le nombre de cases trouvées.
+ */
+int compter_motif(Grille *grille, char motif);
+
+/**
+ * @brief Place la clé (une seule), les pièges et les bonus dans un labyrinthe construit.
+ * * Le mode Difficile place plus de pièges et moins de bonus.
+ * @param grille Pointeur vers la Grille (son mode est mis à jour).
+ * @param mode MODE_FACILE ou MODE_DIFFICILE.
+ */
+void placer_motifs(Grille *grille, int mode);
 
 /**
  * @brief Affiche la liste des meilleurs scores enregistrés pour le labyrinthe chargé.
@@ -137,4 +177,4 @@ void drop_motif(Grille *grille, char motif);
  */
 void consulter_score_labyrinthe(Grille *grille, char *nom_labyrinthe);
 
-#endif
+#endif

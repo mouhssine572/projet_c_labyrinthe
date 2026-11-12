@@ -32,17 +32,17 @@ else
 endif
 
 # Fichiers sources et objets du projet principal
-MAIN_SRCS = $(SRC_DIR)/main.c $(SRC_DIR)/labyrinthe.c $(SRC_DIR)/menu.c $(SRC_DIR)/jouer.c
+MAIN_SRCS = $(SRC_DIR)/main.c $(SRC_DIR)/labyrinthe.c $(SRC_DIR)/menu.c $(SRC_DIR)/jouer.c $(SRC_DIR)/terminal.c
 MAIN_OBJS = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(MAIN_SRCS))
 
 # Fichiers sources et objets des tests
 TEST_JOUER_SRC     = $(TEST_DIR)/test_jouer.c
 TEST_LABY_SRC      = $(TEST_DIR)/test_labyrinthe.c
 
-# Le test du joueur dépend de jouer.o et labyrinthe.o
-TEST_JOUER_OBJS    = $(BUILD_DIR)/test_jouer.o $(BUILD_DIR)/jouer.o $(BUILD_DIR)/labyrinthe.o
-# Le test du labyrinthe dépend de labyrinthe.o
-TEST_LABY_OBJS     = $(BUILD_DIR)/test_labyrinthe.o $(BUILD_DIR)/labyrinthe.o
+# Le test du joueur dépend de jouer.o, labyrinthe.o et terminal.o
+TEST_JOUER_OBJS    = $(BUILD_DIR)/test_jouer.o $(BUILD_DIR)/jouer.o $(BUILD_DIR)/labyrinthe.o $(BUILD_DIR)/terminal.o
+# Le test du labyrinthe dépend de labyrinthe.o et terminal.o (affichage en couleur)
+TEST_LABY_OBJS     = $(BUILD_DIR)/test_labyrinthe.o $(BUILD_DIR)/labyrinthe.o $(BUILD_DIR)/terminal.o
 
 # Exécutables
 EXEC      = $(BIN_DIR)/main

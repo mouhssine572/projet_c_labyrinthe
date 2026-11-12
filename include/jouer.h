@@ -3,12 +3,6 @@
 #include "labyrinthe.h"
 
 
-#define MOTIF_KEY '$'
-#define MOTIF_TRAP '@'
-#define MOTIF_BOOST '&'
-#define MOTIF_OGRE 'G'
-#define MOTIF_FANTOME 'F'
-
 /* Nombre de monstres dans une partie (l'ogre et le fantôme). */
 #define NBR_MONSTRES_MAX 2
 
@@ -21,11 +15,25 @@
 /* Touche permettant d'abandonner la partie et de revenir au menu. */
 #define MVT_TOUCHE_RETOUR '0'
 
+/* Effets des pièges et des bonus sur le score. */
+#define PENALITE_PIEGE 6
+#define GAIN_BONUS 6
+
+/* Mode Difficile : rayon de vision autour du joueur (brouillard)
+ * et distance (en cases de couloir) à partir de laquelle l'ogre chasse le joueur. */
+#define RAYON_BROUILLARD 3
+#define RAYON_CHASSE 10
+
+/* Taille du message affiché sous le labyrinthe. */
+#define TAILLE_MESSAGE 160
+
 typedef struct {
     int x;
     int y;
-    int have_key;
+    int have_key;       /* 1 si le joueur a ramassé la clé */
     int score;
+    char case_dessous;  /* Caractère de la grille caché sous le joueur, remis quand il part */
+    char message[TAILLE_MESSAGE]; /* Dernier événement, affiché sous le labyrinthe */
 } Joueur;
 
 /* Un monstre (ogre ou fantôme). Il n'est pas écrit dans la grille : il est seulement
@@ -35,6 +43,7 @@ typedef struct {
     int y;
     char symbole;      /* MOTIF_OGRE ou MOTIF_FANTOME */
     int traverse_murs; /* 1 si le monstre peut passer à travers les murs (fantôme) */
+    int chasseur;      /* 1 si le monstre se rapproche du joueur quand il est proche (ogre en Difficile) */
     int actif;         /* 0 si aucune case n'a permis de placer le monstre */
 } Monstre;
 
@@ -52,7 +61,9 @@ void initialiser_joueur(Joueur *joueur);
 void positionner_joueur(Grille *grille, Joueur *joueur);
 
 /**
- * @brief Vérifie si un mouvement vers une nouvelle coordonnée est valide et gère les interactions (murs, clé, pièges, trésors).
+ * @brief Vérifie si un mouvement vers une nouvelle coordonnée est valide et gère les interactions
+ * (murs, sortie fermée, clé, pièges, bonus).
+ * * Les pièges restent en place ; la clé et les bonus disparaissent une fois ramassés.
  * @param grille Pointeur vers la Grille de jeu.
  * @param x Coordonnée verticale (ligne) cible.
  * @param y Coordonnée horizontale (colonne) cible.
@@ -62,10 +73,9 @@ void positionner_joueur(Grille *grille, Joueur *joueur);
 int mouvement_valide(Grille *grille, int x, int y, Joueur *joueur);
 
 /**
- * @brief Lit l'entrée utilisateur et déplace le joueur.
+ * @brief Lit une touche (sans attendre Entrée) et déplace le joueur.
  * * Fait appel à la fonction **mouvement_valide** pour verifier si le mouvement est valide.
- * * Fait appel à la fonction **positionner_joueur** pour mettre à jour la position du joueur
- * @param grille Pointeur vers la Grille de jeu.
+ * * Fait appel à la fonction **positionner_joueur** pour mettre à jour la position du joueur.
  * * Une touche invalide ne déplace pas le joueur et ne compte pas de point.
  * @param grille Pointeur vers la Grille de jeu.
  * @param joueur Pointeur vers la structure Joueur à déplacer.
@@ -75,7 +85,7 @@ int mouvement_valide(Grille *grille, int x, int y, Joueur *joueur);
 int mouvement_joueur(Grille *grille, Joueur *joueur);
 
 /**
- * @brief Initialise un monstre (non placé : actif vaut 0).
+ * @brief Initialise un monstre (non placé : actif vaut 0, non chasseur).
  * @param monstre Pointeur vers le Monstre à initialiser.
  * @param symbole Caractère affiché (MOTIF_OGRE ou MOTIF_FANTOME).
  * @param traverse_murs 1 si le monstre peut traverser les murs, 0 sinon.
@@ -91,7 +101,9 @@ void initialiser_monstre(Monstre *monstre, char symbole, int traverse_murs);
 void placer_monstre(Grille *grille, Monstre *monstre, Joueur *joueur);
 
 /**
- * @brief Déplace un monstre d'une case dans une direction aléatoire, sans sortir de l'intérieur du labyrinthe.
+ * @brief Déplace un monstre d'une case, sans sortir de l'intérieur du labyrinthe.
+ * * Un monstre chasseur se rapproche du joueur (par le plus court chemin) si celui-ci est
+ *   à moins de RAYON_CHASSE cases de couloir ; sinon le monstre se déplace au hasard.
  * * Les murs sont évités, sauf si le monstre peut les traverser. S'il est bloqué, il reste sur place.
  * @param grille Pointeur vers la Grille de jeu (elle n'est pas modifiée).
  * @param monstre Pointeur vers le Monstre à déplacer.
@@ -115,17 +127,21 @@ int monstre_attrape_joueur(Monstre *monstre, Joueur *joueur);
 void fantome_attrape_joueur(Grille *grille, Monstre *fantome, Joueur *joueur);
 
 /**
- * @brief Affiche le labyrinthe avec les monstres dessinés par-dessus (le dernier du tableau est au premier plan).
+ * @brief Affiche le labyrinthe en couleur avec les monstres dessinés par-dessus
+ * (le dernier du tableau est au premier plan).
+ * * En mode Difficile, seules les cases à moins de RAYON_BROUILLARD du joueur sont visibles.
  * @param grille Pointeur vers la Grille de jeu (restaurée à l'identique après l'affichage).
+ * @param joueur Pointeur vers le Joueur (centre de la zone visible).
  * @param monstres Tableau de pointeurs vers les monstres.
  * @param nbr_monstres Nombre de monstres (au plus NBR_MONSTRES_MAX).
  */
-void afficher_jeu(Grille *grille, Monstre *monstres[], int nbr_monstres);
+void afficher_jeu(Grille *grille, Joueur *joueur, Monstre *monstres[], int nbr_monstres);
 
 /**
- * @brief Boucle principale du jeu, gérant l'affichage et les mouvements jusqu'à la fin du jeu.
- * * Fait appel à la fonction **joueur_gagne** pour verifier que le joueur a la clé est arrivé à la sortie du labyrinthe.
- * * Après chaque tour, l'ogre ('G') et le fantôme ('F') se déplacent au hasard.
+ * @brief Boucle principale du jeu : efface l'écran, affiche la carte, la légende et le score,
+ * puis gère les mouvements jusqu'à la fin de la partie.
+ * * Fait appel à la fonction **joueur_gagne** pour verifier que le joueur a la clé et est arrivé à la sortie.
+ * * Après chaque tour, l'ogre ('G') et le fantôme ('F') se déplacent (l'ogre chasse en mode Difficile).
  * * Si l'ogre attrape le joueur, la partie est perdue ; si le fantôme l'attrape, le score est doublé.
  * @param grille Pointeur vers la Grille de jeu.
  * @param joueur Pointeur vers la structure Joueur.
@@ -153,7 +169,7 @@ int get_score_joueur(Joueur *joueur);
  * @param grille Pointeur vers la Grille dont le classement doit être mis à jour.
  * @param joueur Pointeur vers le joueur qui vient de terminer la partie.
  * @param nom_joueur Nom du joueur à insérer dans le classement (il est dupliqué).
- * @return int 1 si le classement a été mis à jour, 0 sinon.
+ * @return int La place obtenue dans le classement (1 à NOMBRE_SCORE), 0 si le score n'y entre pas.
  */
 int set_score_joueur(Grille *grille, Joueur *joueur, char *nom_joueur);
 
@@ -164,4 +180,4 @@ int set_score_joueur(Grille *grille, Joueur *joueur, char *nom_joueur);
  */
 void sauvegarder_score(Grille *grille_de_jeu, char *nom_labyrinthe);
 
-#endif
+#endif

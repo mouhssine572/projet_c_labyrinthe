@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "labyrinthe.h"
+#include "terminal.h"
 
 void allouer_cellules(Cellule *cellules, int nbr_cellules_verticales, int nbr_cellules_horizontales){
 
@@ -58,6 +59,8 @@ void allouer_grille(Grille *grille, int hauteur_labyrinthe, int largeur_labyrint
         }
     }
 
+    grille->mode = MODE_FACILE;
+
     // Classement vide : aucun nom alloué
     for (int i = 0; i < NOMBRE_SCORE; i++) {
         grille->top_scores[i].name = NULL;
@@ -109,10 +112,19 @@ void initialiser_grille(Grille *grille, Cellule *cellules) {
     }
 }
 
+void afficher_case(char c){
+    const char *couleur = couleur_case(c);
+    if (*couleur != '\0') {
+        printf("%s%c%s", couleur, c, COULEUR_RESET);
+    } else {
+        putchar(c);
+    }
+}
+
 void afficher_labyrinthe(Grille *grille){
     for (int i = 0; i < grille->hauteur; i++) {
         for (int j = 0; j < grille->largeur; j++) {
-            printf("%c", grille->cases[i][j]);
+            afficher_case(grille->cases[i][j]);
         }
         printf("\n");
     }
@@ -212,7 +224,7 @@ void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe){
         return;
     }
 
-    fprintf(f, "%d %d\n", grille->hauteur, grille->largeur);
+    fprintf(f, "%d %d %d\n", grille->hauteur, grille->largeur, grille->mode);
 
     for (int i = 0; i < grille->hauteur; i++) {
         for (int j = 0; j < grille->largeur; j++) {
@@ -242,16 +254,22 @@ int charger_labyrinthe(Grille *grille, char *nom_labyrinthe){
         return 0;
     }
 
-    int hauteur, largeur;
-    if (fscanf(fichier, "%d %d", &hauteur, &largeur) != 2 || hauteur < 1 || largeur < 1) {
+    // Première ligne : "hauteur largeur [mode]" (le mode est absent des anciens fichiers)
+    char entete[100];
+    int hauteur, largeur, mode = MODE_FACILE;
+    if (fgets(entete, sizeof(entete), fichier) == NULL
+        || sscanf(entete, "%d %d %d", &hauteur, &largeur, &mode) < 2
+        || hauteur < 1 || largeur < 1) {
         fprintf(stderr, "Erreur: Impossible de lire les dimensions du labyrinthe.\n");
         fclose(fichier);
         return 0;
     }
-
-    fgetc(fichier);
+    if (mode != MODE_DIFFICILE) {
+        mode = MODE_FACILE;
+    }
 
     allouer_grille(grille, hauteur, largeur);
+    grille->mode = mode;
 
     // Buffer de ligne : largeur + '\r' + '\n' + '\0'
     char *ligne = malloc(largeur + 3);
@@ -296,12 +314,36 @@ int charger_labyrinthe(Grille *grille, char *nom_labyrinthe){
     return 1;
 }
 
-void drop_motif(Grille *grille, char motif){
+int compter_motif(Grille *grille, char motif){
+    int total = 0;
+    for (int i = 0; i < grille->hauteur; i++) {
+        for (int j = 0; j < grille->largeur; j++) {
+            if (grille->cases[i][j] == motif) total++;
+        }
+    }
+    return total;
+}
+
+/* Nombre de cases intérieures libres de la grille. */
+static int compter_cases_libres(Grille *grille){
+    int total = 0;
+    for (int i = 1; i < grille->hauteur - 1; i++) {
+        for (int j = 1; j < grille->largeur - 1; j++) {
+            if (grille->cases[i][j] == MOTIF_VIDE) total++;
+        }
+    }
+    return total;
+}
+
+int drop_motif(Grille *grille, char motif){
     static int initialised = 0;
     if (!initialised) {
         srand(time(NULL));
         initialised = 1;
     }
+
+    // Sans case libre, la boucle de tirage ne se terminerait jamais
+    if (compter_cases_libres(grille) == 0) return 0;
 
     int i_random;
     int j_random;
@@ -309,10 +351,27 @@ void drop_motif(Grille *grille, char motif){
     do{
         i_random = 1 + rand() % (grille->hauteur - 2);
         j_random = 1 + rand() % (grille->largeur - 2);
-    }while(grille->cases[i_random][j_random] != ' ');
+    }while(grille->cases[i_random][j_random] != MOTIF_VIDE);
 
     grille->cases[i_random][j_random] = motif;
+    return 1;
+}
 
+void placer_motifs(Grille *grille, int mode){
+    int surface = grille->hauteur * grille->largeur;
+    int difficile = (mode == MODE_DIFFICILE);
+
+    grille->mode = difficile ? MODE_DIFFICILE : MODE_FACILE;
+
+    // La clé en premier pour qu'elle ait toujours une place
+    drop_motif(grille, MOTIF_KEY);
+
+    // Difficile : deux fois plus de pièges, deux fois moins de bonus
+    int nbr_pieges = (int)(surface * (difficile ? 0.04 : 0.02));
+    int nbr_bonus  = (int)(surface * (difficile ? 0.01 : 0.02));
+
+    for (int k = 0; k < nbr_pieges; k++) drop_motif(grille, MOTIF_TRAP);
+    for (int k = 0; k < nbr_bonus; k++)  drop_motif(grille, MOTIF_BOOST);
 }
 
 void consulter_score_labyrinthe(Grille *grille, char *nom_labyrinthe){
@@ -329,4 +388,4 @@ void consulter_score_labyrinthe(Grille *grille, char *nom_labyrinthe){
     if (scores_affiches == 0) {
         printf("Aucun score enregistré pour ce labyrinthe.\n");
     }
-}
+}

@@ -3,3 +3,5 @@
 /labyrinthe
 # Fichier temporaire créé par les tests
 temp_input.txt
+# Noms des joueurs mémorisés entre les sessions
+joueurs.txt

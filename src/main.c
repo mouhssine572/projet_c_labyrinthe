@@ -1,5 +1,6 @@
 #include "menu.h"
 #include "jouer.h"
+#include "terminal.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -10,7 +11,7 @@ int main(){
     int largeur_labyrinthe;
     int mode_jeu;
 
-    int maj_score;
+    int place_classement;
     char nom_joueur[TAILLE_NOM];
 
     char nom_labyrinthe[TAILLE_NOM];
@@ -18,6 +19,7 @@ int main(){
     Grille grille;
     Joueur joueur_1;
 
+    initialiser_terminal();
 
     while (choix_du_joueur == 0) {
         choix_du_joueur =  get_action_initial();
@@ -49,20 +51,12 @@ int main(){
                     construire_labyrinthe(&cellules, &grille);
                 }
 
-                drop_motif(&grille, MOTIF_KEY);
-
-                int nbr_motifs_a_placer = (hauteur_labyrinthe * largeur_labyrinthe) * 0.02;
-                for (int k = 0; k < nbr_motifs_a_placer; k++) {
-                    drop_motif(&grille, MOTIF_TRAP);
-                    drop_motif(&grille, MOTIF_BOOST);
-                }
+                placer_motifs(&grille, mode_jeu);
 
                 sauvegarder_labyrinthe(&grille, nom_labyrinthe);
                 afficher_labyrinthe(&grille);
-
-                if(mode_jeu == 2){
-                    printf("le mode 2 est en cours de developpement\n");
-                }
+                printf("\nLabyrinthe \"%s\" créé en mode %s.\n",
+                       nom_labyrinthe, mode_jeu == MODE_DIFFICILE ? "Difficile" : "Facile");
 
                 liberer_grille(&grille);
                 liberer_cellules(&cellules);
@@ -84,6 +78,7 @@ int main(){
 
                 if (charger_labyrinthe(&grille, nom_labyrinthe)) {
                     afficher_labyrinthe(&grille);
+                    printf("\nMode %s.\n", grille.mode == MODE_DIFFICILE ? "Difficile" : "Facile");
                     liberer_grille(&grille);
                 }
 
@@ -107,9 +102,13 @@ int main(){
                 initialiser_joueur(&joueur_1);
 
                 if (jouer_labyrinthe(&grille, &joueur_1)) {
-                    maj_score = set_score_joueur(&grille, &joueur_1, nom_joueur);
-                    if(maj_score == 1){
+                    place_classement = set_score_joueur(&grille, &joueur_1, nom_joueur);
+                    if (place_classement > 0) {
                         sauvegarder_score(&grille, nom_labyrinthe);
+                        printf("\nVous êtes %d%s sur ce labyrinthe !\n",
+                               place_classement, place_classement == 1 ? "er" : "e");
+                    } else {
+                        printf("\nVotre score n'entre pas dans le top %d de ce labyrinthe.\n", NOMBRE_SCORE);
                     }
                 }
 
