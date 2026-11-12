@@ -97,7 +97,7 @@ MU_TEST(test_touche_invalide) {
     positionner_joueur(g, j);           // Joueur affiché en (0, 1), score = 1
     simuler_entree("x\n");
 
-    mu_assert_int_eq(1, mouvement_joueur(g, j));
+    mu_assert_int_eq(MVT_INVALIDE, mouvement_joueur(g, j));
 
     mu_assert_int_eq('*', g->cases[0][1]); // Le joueur reste affiché à sa place
     mu_assert_int_eq(0, j->x);
@@ -106,12 +106,105 @@ MU_TEST(test_touche_invalide) {
 
 }
 
+MU_TEST(test_touche_retour) {
+
+    simuler_entree("0\n");
+
+    mu_assert_int_eq(MVT_RETOUR, mouvement_joueur(g, j));
+    mu_assert_int_eq(0, j->x);   // Le joueur n'a pas bougé
+    mu_assert_int_eq(0, j->score);
+}
+
 MU_TEST(test_fin_entree) {
 
     simuler_entree("");
 
     mu_assert_int_eq(0, mouvement_joueur(g, j)); // Entrée vide : fin de partie signalée
 
+}
+
+MU_TEST(test_cle_sans_bonus) {
+
+    g->cases[1][1] = MOTIF_KEY;
+    j->score = 10;
+    mouvement_valide(g, 1, 1, j);
+    mu_assert_int_eq(1, j->have_key);
+    mu_assert_int_eq(10, j->score); // La clé ne modifie pas le score
+}
+
+MU_TEST(test_deplacer_ogre) {
+    // Couloir intérieur : (1,1) et (1,2) libres, (1,3) est un mur.
+    // L'ogre en (1,2) ne peut aller qu'en (1,1) : il ne traverse pas le mur.
+    Monstre ogre;
+    initialiser_monstre(&ogre, MOTIF_OGRE, 0);
+    ogre.x = 1;
+    ogre.y = 2;
+    ogre.actif = 1;
+
+    mu_assert_int_eq(0, deplacer_monstre(g, &ogre, j)); // Joueur en (0,1) : pas attrapé
+    mu_assert_int_eq(1, ogre.x);
+    mu_assert_int_eq(1, ogre.y);
+    mu_assert_int_eq(' ', g->cases[1][1]);              // La grille n'est pas modifiée
+
+    // L'ogre revient en (1,2) où se trouve le joueur
+    j->x = 1;
+    j->y = 2;
+    mu_assert_int_eq(1, deplacer_monstre(g, &ogre, j));
+    mu_assert_int_eq(1, monstre_attrape_joueur(&ogre, j));
+}
+
+MU_TEST(test_deplacer_fantome) {
+    // Le fantôme est dans le mur (1,3) : il ne peut aller qu'en (1,2) ((1,4) est le bord).
+    Monstre fantome;
+    initialiser_monstre(&fantome, MOTIF_FANTOME, 1);
+    fantome.x = 1;
+    fantome.y = 3;
+    fantome.actif = 1;
+
+    mu_assert_int_eq(0, deplacer_monstre(g, &fantome, j));
+    mu_assert_int_eq(1, fantome.x);
+    mu_assert_int_eq(2, fantome.y);
+    mu_assert_int_eq('#', g->cases[1][3]);              // Le mur est intact
+
+    // Depuis (1,2), il peut entrer dans le mur (1,3) ou aller en (1,1) : il ne reste jamais bloqué
+    deplacer_monstre(g, &fantome, j);
+    mu_assert(fantome.y == 1 || fantome.y == 3, "le fantome doit avoir bouge");
+}
+
+MU_TEST(test_fantome_double_score) {
+    Monstre fantome;
+    initialiser_monstre(&fantome, MOTIF_FANTOME, 1);
+
+    j->score = 7;
+    fantome_attrape_joueur(g, &fantome, j);
+
+    mu_assert_int_eq(14, j->score);                     // Score doublé
+    mu_assert_int_eq(1, fantome.actif);                 // Le fantôme est replacé...
+    mu_assert_int_eq(0, monstre_attrape_joueur(&fantome, j)); // ...ailleurs que sur le joueur
+}
+
+MU_TEST(test_placer_monstre) {
+    Monstre ogre;
+    initialiser_monstre(&ogre, MOTIF_OGRE, 0);
+
+    placer_monstre(g, &ogre, j);
+    // Seules (1,1) et (1,2) sont libres : la plus éloignée du joueur (0,1) est (1,2)
+    mu_assert_int_eq(1, ogre.actif);
+    mu_assert_int_eq(1, ogre.x);
+    mu_assert_int_eq(2, ogre.y);
+    mu_assert_int_eq(' ', g->cases[1][2]);              // Le monstre n'est pas écrit dans la grille
+}
+
+MU_TEST(test_afficher_jeu_restaure_grille) {
+    Monstre fantome;
+    Monstre *monstres[NBR_MONSTRES_MAX] = {&fantome};
+    initialiser_monstre(&fantome, MOTIF_FANTOME, 1);
+    fantome.x = 1;
+    fantome.y = 3;
+    fantome.actif = 1;
+
+    afficher_jeu(g, monstres, 1);
+    mu_assert_int_eq('#', g->cases[1][3]);              // Le mur sous le fantôme est restauré
 }
 
 MU_TEST(test_set_score_joueur) {
@@ -154,7 +247,14 @@ MU_TEST_SUITE(test_suite) {
     MU_RUN_TEST(test_mouvement_valide);
     MU_RUN_TEST(test_mouvement_joueurt);
     MU_RUN_TEST(test_touche_invalide);
+    MU_RUN_TEST(test_touche_retour);
     MU_RUN_TEST(test_fin_entree);
+    MU_RUN_TEST(test_cle_sans_bonus);
+    MU_RUN_TEST(test_deplacer_ogre);
+    MU_RUN_TEST(test_deplacer_fantome);
+    MU_RUN_TEST(test_fantome_double_score);
+    MU_RUN_TEST(test_placer_monstre);
+    MU_RUN_TEST(test_afficher_jeu_restaure_grille);
     MU_RUN_TEST(test_set_score_joueur);
 }
 

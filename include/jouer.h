@@ -6,6 +6,20 @@
 #define MOTIF_KEY '$'
 #define MOTIF_TRAP '@'
 #define MOTIF_BOOST '&'
+#define MOTIF_OGRE 'G'
+#define MOTIF_FANTOME 'F'
+
+/* Nombre de monstres dans une partie (l'ogre et le fantôme). */
+#define NBR_MONSTRES_MAX 2
+
+/* Valeurs de retour de mouvement_joueur. */
+#define MVT_FIN 0       /* Entrée standard fermée */
+#define MVT_JOUE 1      /* Un tour a été joué */
+#define MVT_INVALIDE 2  /* Touche invalide : aucun tour joué */
+#define MVT_RETOUR 3    /* Le joueur abandonne pour revenir au menu */
+
+/* Touche permettant d'abandonner la partie et de revenir au menu. */
+#define MVT_TOUCHE_RETOUR '0'
 
 typedef struct {
     int x;
@@ -13,6 +27,16 @@ typedef struct {
     int have_key;
     int score;
 } Joueur;
+
+/* Un monstre (ogre ou fantôme). Il n'est pas écrit dans la grille : il est seulement
+ * dessiné par-dessus au moment de l'affichage (voir afficher_jeu). */
+typedef struct {
+    int x;
+    int y;
+    char symbole;      /* MOTIF_OGRE ou MOTIF_FANTOME */
+    int traverse_murs; /* 1 si le monstre peut passer à travers les murs (fantôme) */
+    int actif;         /* 0 si aucune case n'a permis de placer le monstre */
+} Monstre;
 
 /**
  * @brief Initialise les attributs du joueur à leurs valeurs de départ.
@@ -45,16 +69,67 @@ int mouvement_valide(Grille *grille, int x, int y, Joueur *joueur);
  * * Une touche invalide ne déplace pas le joueur et ne compte pas de point.
  * @param grille Pointeur vers la Grille de jeu.
  * @param joueur Pointeur vers la structure Joueur à déplacer.
- * @return int 1 si une touche a été lue, 0 si l'entrée standard est fermée.
+ * @return int MVT_JOUE si un tour a été joué, MVT_INVALIDE si la touche est invalide,
+ * MVT_RETOUR si le joueur demande à revenir au menu, MVT_FIN si l'entrée standard est fermée.
  */
 int mouvement_joueur(Grille *grille, Joueur *joueur);
 
 /**
+ * @brief Initialise un monstre (non placé : actif vaut 0).
+ * @param monstre Pointeur vers le Monstre à initialiser.
+ * @param symbole Caractère affiché (MOTIF_OGRE ou MOTIF_FANTOME).
+ * @param traverse_murs 1 si le monstre peut traverser les murs, 0 sinon.
+ */
+void initialiser_monstre(Monstre *monstre, char symbole, int traverse_murs);
+
+/**
+ * @brief Place un monstre sur une case libre de l'intérieur du labyrinthe, loin du joueur si possible.
+ * @param grille Pointeur vers la Grille de jeu (elle n'est pas modifiée).
+ * @param monstre Pointeur vers le Monstre à placer (actif vaut 0 si aucune case libre n'existe).
+ * @param joueur Pointeur vers le Joueur (pour éviter de placer le monstre près de lui).
+ */
+void placer_monstre(Grille *grille, Monstre *monstre, Joueur *joueur);
+
+/**
+ * @brief Déplace un monstre d'une case dans une direction aléatoire, sans sortir de l'intérieur du labyrinthe.
+ * * Les murs sont évités, sauf si le monstre peut les traverser. S'il est bloqué, il reste sur place.
+ * @param grille Pointeur vers la Grille de jeu (elle n'est pas modifiée).
+ * @param monstre Pointeur vers le Monstre à déplacer.
+ * @param joueur Pointeur vers le Joueur.
+ * @return int 1 si le monstre arrive sur la case du joueur, 0 sinon.
+ */
+int deplacer_monstre(Grille *grille, Monstre *monstre, Joueur *joueur);
+
+/**
+ * @brief Indique si le monstre et le joueur sont sur la même case.
+ * @return int 1 si le joueur est attrapé, 0 sinon.
+ */
+int monstre_attrape_joueur(Monstre *monstre, Joueur *joueur);
+
+/**
+ * @brief Double le score du joueur attrapé par le fantôme, puis fait réapparaître le fantôme ailleurs.
+ * @param grille Pointeur vers la Grille de jeu.
+ * @param fantome Pointeur vers le fantôme.
+ * @param joueur Pointeur vers le Joueur attrapé.
+ */
+void fantome_attrape_joueur(Grille *grille, Monstre *fantome, Joueur *joueur);
+
+/**
+ * @brief Affiche le labyrinthe avec les monstres dessinés par-dessus (le dernier du tableau est au premier plan).
+ * @param grille Pointeur vers la Grille de jeu (restaurée à l'identique après l'affichage).
+ * @param monstres Tableau de pointeurs vers les monstres.
+ * @param nbr_monstres Nombre de monstres (au plus NBR_MONSTRES_MAX).
+ */
+void afficher_jeu(Grille *grille, Monstre *monstres[], int nbr_monstres);
+
+/**
  * @brief Boucle principale du jeu, gérant l'affichage et les mouvements jusqu'à la fin du jeu.
  * * Fait appel à la fonction **joueur_gagne** pour verifier que le joueur a la clé est arrivé à la sortie du labyrinthe.
+ * * Après chaque tour, l'ogre ('G') et le fantôme ('F') se déplacent au hasard.
+ * * Si l'ogre attrape le joueur, la partie est perdue ; si le fantôme l'attrape, le score est doublé.
  * @param grille Pointeur vers la Grille de jeu.
  * @param joueur Pointeur vers la structure Joueur.
- * @return int 1 si le joueur a gagné, 0 si la partie a été abandonnée (fin de l'entrée).
+ * @return int 1 si le joueur a gagné, 0 si la partie est perdue (ogre) ou abandonnée.
  */
 int jouer_labyrinthe(Grille *grille, Joueur *joueur);
 

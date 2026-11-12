@@ -18,6 +18,8 @@ Ce projet est un jeu de labyrinthe interactif développé en C. Le programme per
 
 ### 3. **Motifs et Pièges**
 - **Clé ($)** : À récupérer pour pouvoir sortir du labyrinthe
+- **Ogre (G)** : Se déplace d'une case au hasard à chaque tour (sans traverser les murs) ; s'il attrape le joueur, la partie est perdue
+- **Fantôme (F)** : Se déplace d'une case au hasard à chaque tour et traverse les murs ; s'il attrape le joueur, la partie continue mais le score est doublé, puis le fantôme réapparaît ailleurs
 - **Pièges (@)** : Ajoutent 6 points de pénalité au score
 - **Bonus (&)** : Réduisent la pénalité en retirant 6 points (minimum 0)
 
@@ -85,13 +87,16 @@ BUILD=debug make
 
 ## 🎯 Menu Principal
 
-Au lancement du programme, vous avez 5 options :
+Au lancement du programme, vous avez 6 options :
 
 1. **Créer un labyrinthe** : Générez un nouveau labyrinthe avec vos dimensions
 2. **Charger un labyrinthe** : Chargez un labyrinthe existant pour le visualiser
 3. **Jouer** : Jouez dans un labyrinthe existant
 4. **Consulter les scores** : Affichez le top 10 d'un labyrinthe
-5. **Quitter** : Quittez le programme
+5. **Consulter les règles du jeu** : Affiche le but du jeu et la signification de chaque caractère (`#`, `o`, `-`, `*`, `$`, `@`, `&`, `G`, `F`)
+6. **Quitter** : Quittez le programme
+
+À chaque question (mode, dimensions, nom du joueur, nom du labyrinthe), tapez `0` pour revenir au menu principal. Pendant une partie, la touche `0` abandonne la partie et ramène au menu.
 
 ## 🎮 Comment Jouer
 
@@ -103,6 +108,7 @@ Au lancement du programme, vous avez 5 options :
    - `q` : Aller à gauche
    - `d` : Aller à droite
    - `s` : Reculer (bas)
+   - `0` : Abandonner et revenir au menu
 5. Ramassez la clé ($) et atteignez la sortie (-) pour gagner
 6. Votre score s'affiche après chaque mouvement
 
@@ -112,6 +118,7 @@ Au lancement du programme, vous avez 5 options :
 - **Chaque mouvement** : +1 point
 - **Piège (@)** : +6 points de pénalité
 - **Bonus (&)** : -6 points (minimum 0)
+- **Fantôme (F)** : score doublé
 - **Objectif** : Terminer avec le score le plus bas possible
 
 ## 🧪 Tests

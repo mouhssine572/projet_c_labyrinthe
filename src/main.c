@@ -17,7 +17,7 @@ int main(){
     Cellule cellules;
     Grille grille;
     Joueur joueur_1;
-    
+
 
     while (choix_du_joueur == 0) {
         choix_du_joueur =  get_action_initial();
@@ -25,28 +25,35 @@ int main(){
         switch (choix_du_joueur) {
             case 1:
                 printf("Vous voulez créer un labyrinthe\n");
-                
-                mode_jeu = get_mode_jeu();
 
-                get_parametres_labyrinthe(&hauteur_labyrinthe, &largeur_labyrinthe, nom_labyrinthe);
+                mode_jeu = get_mode_jeu();
+                if (mode_jeu == CHOIX_RETOUR) {
+                    choix_du_joueur = 0;
+                    break;
+                }
+
+                if (!get_parametres_labyrinthe(&hauteur_labyrinthe, &largeur_labyrinthe, nom_labyrinthe)) {
+                    choix_du_joueur = 0;
+                    break;
+                }
 
                 int nbr_cellules_verticales = (hauteur_labyrinthe - 1)/ 2;
                 int nbr_cellules_horizontales = (largeur_labyrinthe - 1) / 2;
-                
+
                 allouer_cellules(&cellules, nbr_cellules_verticales, nbr_cellules_horizontales);
                 allouer_grille(&grille, hauteur_labyrinthe, largeur_labyrinthe);
                 initialiser_cellules(&cellules);
                 initialiser_grille(&grille, &cellules);
-                
+
                 while (!labyrinthe_complet(&cellules, &grille)) {
-                    construire_labyrinthe(&cellules, &grille);  
+                    construire_labyrinthe(&cellules, &grille);
                 }
 
                 drop_motif(&grille, MOTIF_KEY);
-                
+
                 int nbr_motifs_a_placer = (hauteur_labyrinthe * largeur_labyrinthe) * 0.02;
                 for (int k = 0; k < nbr_motifs_a_placer; k++) {
-                    drop_motif(&grille, MOTIF_TRAP); 
+                    drop_motif(&grille, MOTIF_TRAP);
                     drop_motif(&grille, MOTIF_BOOST);
                 }
 
@@ -62,10 +69,18 @@ int main(){
 
                 choix_du_joueur =  0;
                 break;
-                
+
             case 2:
+                if (!labyrinthe_disponible()) {
+                    printf("\nAucun labyrinthe à charger. Créez d'abord un labyrinthe (choix 1).\n");
+                    choix_du_joueur = 0;
+                    break;
+                }
                 printf("Vous voulez charger un labyrinthe\n");
-                get_nom_labyrinthe(nom_labyrinthe);
+                if (!get_nom_labyrinthe(nom_labyrinthe)) {
+                    choix_du_joueur = 0;
+                    break;
+                }
 
                 if (charger_labyrinthe(&grille, nom_labyrinthe)) {
                     afficher_labyrinthe(&grille);
@@ -76,9 +91,15 @@ int main(){
                 break;
 
             case 3:
-                printf("\n Nom du joueur : \n");
-                lire_mot(nom_joueur);
-                get_nom_labyrinthe(nom_labyrinthe);
+                if (!labyrinthe_disponible()) {
+                    printf("\nAucun labyrinthe n'a été créé. Créez d'abord un labyrinthe (choix 1).\n");
+                    choix_du_joueur = 0;
+                    break;
+                }
+                if (!get_nom_joueur(nom_joueur) || !get_nom_labyrinthe(nom_labyrinthe)) {
+                    choix_du_joueur = 0;
+                    break;
+                }
                 if (!charger_labyrinthe(&grille, nom_labyrinthe)) {
                     choix_du_joueur = 0;
                     break;
@@ -95,23 +116,34 @@ int main(){
                 liberer_grille(&grille);
                 choix_du_joueur = 0;
                 break;
+
             case 4:
-                get_nom_labyrinthe(nom_labyrinthe);
+                if (!labyrinthe_disponible()) {
+                    printf("\nAucun labyrinthe disponible. Créez d'abord un labyrinthe (choix 1).\n");
+                    choix_du_joueur = 0;
+                    break;
+                }
+                if (!get_nom_labyrinthe(nom_labyrinthe)) {
+                    choix_du_joueur = 0;
+                    break;
+                }
                 if (charger_labyrinthe(&grille, nom_labyrinthe)) {
                     consulter_score_labyrinthe(&grille, nom_labyrinthe);
                     liberer_grille(&grille);
                 }
                 choix_du_joueur = 0;
                 break;
+
             case 5:
+                afficher_regles();
+                choix_du_joueur = 0;
+                break;
+
+            case 6:
                 printf("Vous quittez le jeu\n");
                 break;
         }
     }
 
-   
-    
-
     return 0;
 }
-
