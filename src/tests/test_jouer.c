@@ -10,10 +10,12 @@ Joueur *j = NULL;
 const int H = 3; 
 const int L = 5; 
 
-extern void initialiser_joueur(Joueur *joueur);
-extern void positionner_joueur(Grille *grille, Joueur *joueur);
-extern int mouvement_valide(Grille *grille, int x, int y, Joueur *joueur);
-extern void mouvement_joueur(Grille *grille, Joueur *joueur);
+/* Remplace stdin par un fichier temporaire contenant les touches données. */
+static void simuler_entree(const char *touches) {
+    FILE *temp_in = freopen("temp_input.txt", "w+", stdin);
+    fwrite(touches, 1, strlen(touches), temp_in);
+    rewind(temp_in);
+}
 
 void test_setup(void) {
 
@@ -79,32 +81,85 @@ MU_TEST(test_mouvement_valide) {
 
 MU_TEST(test_mouvement_joueurt) {
     
-    char buffer[] = "s\n";
-    FILE *temp_in = freopen("temp_input.txt", "w+", stdin);
-    fwrite(buffer, 1, strlen(buffer), temp_in);
-    rewind(temp_in);
-    
-    mouvement_joueur(g, j);
+    simuler_entree("s\n");
+
+    mu_assert_int_eq(1, mouvement_joueur(g, j));
 
     mu_assert_int_eq(' ', g->cases[0][1]); // L'ancienne case (0, 1) doit être vide
     mu_assert_int_eq('*', g->cases[1][1]); // La nouvelle case (1, 1) doit être '*'
     mu_assert_int_eq(1, j->x);             // Coordonnée X du joueur doit être 1
-    
-    fclose(temp_in);
 
+
+}
+
+MU_TEST(test_touche_invalide) {
+
+    positionner_joueur(g, j);           // Joueur affiché en (0, 1), score = 1
+    simuler_entree("x\n");
+
+    mu_assert_int_eq(1, mouvement_joueur(g, j));
+
+    mu_assert_int_eq('*', g->cases[0][1]); // Le joueur reste affiché à sa place
+    mu_assert_int_eq(0, j->x);
+    mu_assert_int_eq(1, j->y);
+    mu_assert_int_eq(1, j->score);         // Aucun point compté
+
+}
+
+MU_TEST(test_fin_entree) {
+
+    simuler_entree("");
+
+    mu_assert_int_eq(0, mouvement_joueur(g, j)); // Entrée vide : fin de partie signalée
+
+}
+
+MU_TEST(test_set_score_joueur) {
+
+    for (int i = 0; i < NOMBRE_SCORE; i++) {
+        g->top_scores[i].name = NULL;
+        g->top_scores[i].score = 0;
+    }
+
+    j->score = 20;
+    mu_assert_int_eq(1, set_score_joueur(g, j, "Bob"));
+    j->score = 10;
+    mu_assert_int_eq(1, set_score_joueur(g, j, "Alice"));
+
+    // Classement trié du meilleur (plus petit) au moins bon
+    mu_assert_int_eq(10, g->top_scores[0].score);
+    mu_assert_string_eq("Alice", g->top_scores[0].name);
+    mu_assert_int_eq(20, g->top_scores[1].score);
+    mu_assert_string_eq("Bob", g->top_scores[1].name);
+
+    // Un classement plein refuse un score moins bon que le dernier
+    for (int i = 2; i < NOMBRE_SCORE; i++) {
+        j->score = 20 + i;
+        set_score_joueur(g, j, "Autre");
+    }
+    j->score = 1000;
+    mu_assert_int_eq(0, set_score_joueur(g, j, "Lent"));
+
+    for (int i = 0; i < NOMBRE_SCORE; i++) {
+        free(g->top_scores[i].name);
+        g->top_scores[i].name = NULL;
+    }
 }
 
 
 MU_TEST_SUITE(test_suite) {
     MU_SUITE_CONFIGURE(&test_setup, &test_teardown);
-    
+
     MU_RUN_TEST(test_positionner_joueur);
     MU_RUN_TEST(test_mouvement_valide);
-    MU_RUN_TEST(test_mouvement_joueurt); 
+    MU_RUN_TEST(test_mouvement_joueurt);
+    MU_RUN_TEST(test_touche_invalide);
+    MU_RUN_TEST(test_fin_entree);
+    MU_RUN_TEST(test_set_score_joueur);
 }
 
-int main(int /*argc*/, char * /*argv*/ []) {
+int main(void) {
     MU_RUN_SUITE(test_suite);
     MU_REPORT();
     return MU_EXIT_CODE;
-}
+}

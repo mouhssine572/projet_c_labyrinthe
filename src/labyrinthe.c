@@ -57,6 +57,12 @@ void allouer_grille(Grille *grille, int hauteur_labyrinthe, int largeur_labyrint
             exit(EXIT_FAILURE);
         }
     }
+
+    // Classement vide : aucun nom alloué
+    for (int i = 0; i < NOMBRE_SCORE; i++) {
+        grille->top_scores[i].name = NULL;
+        grille->top_scores[i].score = 0;
+    }
 }
 
 void liberer_grille(Grille *grille){
@@ -187,6 +193,8 @@ int labyrinthe_complet(Cellule *cellules, Grille *grille){
     grille->cases[grille->hauteur - 1][grille->largeur - 2] = '-';   // Sortie
     
     for(int i = 0; i < NOMBRE_SCORE; i++){
+        free(grille->top_scores[i].name);
+        grille->top_scores[i].name = NULL;
         grille->top_scores[i].score = 0;
     }
 
@@ -224,55 +232,68 @@ void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe){
     fclose(f);
 }
 
-void charger_labyrinthe(Grille *grille, char *nom_labyrinthe){
+int charger_labyrinthe(Grille *grille, char *nom_labyrinthe){
 
     char chemin_complet[100];
     snprintf(chemin_complet, 100, "labyrinthe/%s", nom_labyrinthe);
     FILE *fichier = fopen(chemin_complet, "r");
     if (fichier == NULL) {
         perror("Erreur lors de l'ouverture du fichier");
-        exit(EXIT_FAILURE);
+        return 0;
     }
 
-    if (fscanf(fichier, "%d %d", &grille->hauteur, &grille->largeur) != 2) {
+    int hauteur, largeur;
+    if (fscanf(fichier, "%d %d", &hauteur, &largeur) != 2 || hauteur < 1 || largeur < 1) {
         fprintf(stderr, "Erreur: Impossible de lire les dimensions du labyrinthe.\n");
         fclose(fichier);
-        exit(EXIT_FAILURE);
+        return 0;
     }
 
     fgetc(fichier);
 
-    allouer_grille(grille, grille->hauteur, grille->largeur);
+    allouer_grille(grille, hauteur, largeur);
+
+    // Buffer de ligne : largeur + '\r' + '\n' + '\0'
+    char *ligne = malloc(largeur + 3);
+    if (ligne == NULL) {
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
 
     for (int i = 0; i < grille->hauteur; i++) {
-        if (fgets(grille->cases[i], grille->largeur + 2, fichier) == NULL) { // +2 pour \n et \0
+        if (fgets(ligne, largeur + 3, fichier) == NULL) {
             fprintf(stderr, "Erreur: Impossible de lire les données du labyrinthe.\n");
+            free(ligne);
             fclose(fichier);
-            exit(EXIT_FAILURE);
+            liberer_grille(grille);
+            return 0;
         }
-        grille->cases[i][strcspn(grille->cases[i], "\n")] = 0;
+        ligne[strcspn(ligne, "\r\n")] = '\0';
+
+        // Copie dans la grille (complétée par des murs si la ligne est trop courte)
+        size_t longueur = strlen(ligne);
+        for (int j = 0; j < largeur; j++) {
+            grille->cases[i][j] = ((size_t)j < longueur) ? ligne[j] : '#';
+        }
     }
+    free(ligne);
 
     int score_lu;
     int scores_trouves = 0;
     char nom_lu[100];
 
     while (scores_trouves < NOMBRE_SCORE) {
-        if (fscanf(fichier, "%d %s", &score_lu, nom_lu) == 2) {
+        if (fscanf(fichier, "%d %99s", &score_lu, nom_lu) == 2) {
             grille->top_scores[scores_trouves].score = score_lu;
             grille->top_scores[scores_trouves].name = strdup(nom_lu);
             scores_trouves++;
         } else {
-            break; 
+            break;
         }
-    }
-    
-    for (int i = scores_trouves; i < NOMBRE_SCORE; i++) {
-        grille->top_scores[i].name = NULL;
-        grille->top_scores[i].score = 0;
     }
 
     fclose(fichier);
+    return 1;
 }
 
 void drop_motif(Grille *grille, char motif){
@@ -297,7 +318,15 @@ void drop_motif(Grille *grille, char motif){
 void consulter_score_labyrinthe(Grille *grille, char *nom_labyrinthe){
     
     printf("\nLe Top 10 des scores du labyrinthe %s est:\n", nom_labyrinthe);
+    int scores_affiches = 0;
     for(int i = 0; i < NOMBRE_SCORE; i++){
+        if (grille->top_scores[i].name == NULL || grille->top_scores[i].score <= 0) {
+            continue;
+        }
         printf("Score %d : %d  Joueur : %s \n", i+1, grille->top_scores[i].score, grille->top_scores[i].name);
+        scores_affiches++;
     }
-}
+    if (scores_affiches == 0) {
+        printf("Aucun score enregistré pour ce labyrinthe.\n");
+    }
+}

@@ -11,9 +11,9 @@ int main(){
     int mode_jeu;
 
     int maj_score;
-    char nom_joueur[50];
+    char nom_joueur[TAILLE_NOM];
 
-    char nom_labyrinthe[50];
+    char nom_labyrinthe[TAILLE_NOM];
     Cellule cellules;
     Grille grille;
     Joueur joueur_1;
@@ -66,27 +66,30 @@ int main(){
             case 2:
                 printf("Vous voulez charger un labyrinthe\n");
                 get_nom_labyrinthe(nom_labyrinthe);
-                
-                charger_labyrinthe(&grille, nom_labyrinthe);
-                afficher_labyrinthe(&grille);
 
-                liberer_grille(&grille);
+                if (charger_labyrinthe(&grille, nom_labyrinthe)) {
+                    afficher_labyrinthe(&grille);
+                    liberer_grille(&grille);
+                }
 
                 choix_du_joueur = 0;
                 break;
 
             case 3:
                 printf("\n Nom du joueur : \n");
-                scanf("%s", nom_joueur);
+                lire_mot(nom_joueur);
                 get_nom_labyrinthe(nom_labyrinthe);
-                charger_labyrinthe(&grille, nom_labyrinthe);
+                if (!charger_labyrinthe(&grille, nom_labyrinthe)) {
+                    choix_du_joueur = 0;
+                    break;
+                }
                 initialiser_joueur(&joueur_1);
 
-                jouer_labyrinthe(&grille, &joueur_1);
-
-                maj_score = set_score_joueur(&grille, &joueur_1, nom_joueur); 
-                if(maj_score == 1){
-                    sauvegarder_score(&grille, nom_labyrinthe);
+                if (jouer_labyrinthe(&grille, &joueur_1)) {
+                    maj_score = set_score_joueur(&grille, &joueur_1, nom_joueur);
+                    if(maj_score == 1){
+                        sauvegarder_score(&grille, nom_labyrinthe);
+                    }
                 }
 
                 liberer_grille(&grille);
@@ -94,11 +97,10 @@ int main(){
                 break;
             case 4:
                 get_nom_labyrinthe(nom_labyrinthe);
-                charger_labyrinthe(&grille, nom_labyrinthe);
-
-                consulter_score_labyrinthe(&grille, nom_labyrinthe);
-
-                liberer_grille(&grille);
+                if (charger_labyrinthe(&grille, nom_labyrinthe)) {
+                    consulter_score_labyrinthe(&grille, nom_labyrinthe);
+                    liberer_grille(&grille);
+                }
                 choix_du_joueur = 0;
                 break;
             case 5:

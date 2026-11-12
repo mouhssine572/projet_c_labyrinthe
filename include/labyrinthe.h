@@ -48,7 +48,8 @@ void liberer_cellules(Cellule *cellules);
 
 /**
  * @brief Alloue dynamiquement la grille (matrice de caractères) du labyrinthe.
- * Cette fonction configure les dimensions réelles (cases) et alloue la mémoire pour la grille affichable du labyrinthe.
+ * Cette fonction configure les dimensions réelles (cases), alloue la mémoire pour la grille affichable du labyrinthe
+ * et initialise un classement vide (noms à NULL, scores à 0).
  * @param grille Pointeur vers la structure Grille à allouer.
  * @param hauteur_labyrinthe Hauteur totale de la grille (lignes).
  * @param largeur_labyrinthe Largeur totale de la grille (colonnes).
@@ -117,9 +118,10 @@ void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe);
  * de la grille, puis lit la liste des scores.
  * * @param grille Pointeur vers la structure Grille où charger les données.
  * @param nom_labyrinthe Nom du fichier de sauvegarde à charger.
- * @note Le programme se termine en cas d'erreur de lecture ou d'allocation.
+ * @return int 1 si le chargement a réussi, 0 sinon (fichier absent ou invalide ; rien n'est alloué).
+ * @note Le programme se termine uniquement en cas d'échec d'allocation mémoire.
  */
-void charger_labyrinthe(Grille *grille, char *nom_labyrinthe);
+int charger_labyrinthe(Grille *grille, char *nom_labyrinthe);
 
 /**
  * @brief Place un motif (clé, piège, boost) aléatoirement dans un passage libre (' ') de la grille.
@@ -135,4 +137,4 @@ void drop_motif(Grille *grille, char motif);
  */
 void consulter_score_labyrinthe(Grille *grille, char *nom_labyrinthe);
 
-#endif
+#endif

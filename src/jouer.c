@@ -38,15 +38,13 @@ int mouvement_valide(Grille *grille, int x, int y, Joueur *joueur){
     return 1;
 }
 
-void mouvement_joueur(Grille *grille, Joueur *joueur){
+int mouvement_joueur(Grille *grille, Joueur *joueur){
     char mvt;
 
-    int x = joueur->x; 
+    int x = joueur->x;
     int y = joueur->y;
 
-    if (scanf(" %c", &mvt) != 1) return;
-
-    grille -> cases[joueur -> x][joueur -> y] = ' ';
+    if (scanf(" %c", &mvt) != 1) return 0; // Fin de l'entrée standard
 
     switch(mvt){
         case 'z':
@@ -62,10 +60,13 @@ void mouvement_joueur(Grille *grille, Joueur *joueur){
             x++;
             break;
         default:
-            printf("Touche invalide.\n");
-            return;
+            // Le joueur reste affiché à sa place, aucun point n'est compté
+            printf("Touche invalide (utilisez z, q, s, d).\n");
+            return 1;
     }
-    
+
+    grille -> cases[joueur -> x][joueur -> y] = ' ';
+
     if(mouvement_valide(grille, x, y, joueur)){
         joueur -> x = x;
         joueur -> y = y;
@@ -73,15 +74,22 @@ void mouvement_joueur(Grille *grille, Joueur *joueur){
 
     positionner_joueur(grille, joueur);
     printf("\n Votre score est : %d \n", get_score_joueur(joueur));
+    return 1;
 }
 
-void jouer_labyrinthe(Grille *grille, Joueur *joueur){
-    
+int jouer_labyrinthe(Grille *grille, Joueur *joueur){
+
     do {
         afficher_labyrinthe(grille);
-        mouvement_joueur(grille, joueur);                 
+        if (!mouvement_joueur(grille, joueur)) {
+            printf("\nPartie abandonnée.\n");
+            return 0;
+        }
     } while(joueur_gagne(grille, joueur) == 0);
 
+    afficher_labyrinthe(grille);
+    printf("\nBravo, vous avez trouvé la sortie avec un score de %d !\n", get_score_joueur(joueur));
+    return 1;
 }
 
 int joueur_gagne(Grille *grille, Joueur *joueur){
@@ -94,7 +102,7 @@ int get_score_joueur(Joueur *joueur){
     return joueur -> score; 
 }
 
-int set_score_joueur(Grille *grille, Joueur *joueur, char *nom_labyrinthe) {
+int set_score_joueur(Grille *grille, Joueur *joueur, char *nom_joueur) {
     
     int score_joueur = get_score_joueur(joueur);
     int maj_scores = 0;
@@ -124,8 +132,8 @@ int set_score_joueur(Grille *grille, Joueur *joueur, char *nom_labyrinthe) {
 
         // Insérer la nouvelle entrée (dupliquer le nom pour en prendre possession)
         grille->top_scores[index_insertion].score = score_joueur;
-        if (nom_labyrinthe != NULL) {
-            grille->top_scores[index_insertion].name = strdup(nom_labyrinthe);
+        if (nom_joueur != NULL) {
+            grille->top_scores[index_insertion].name = strdup(nom_joueur);
         } else {
             grille->top_scores[index_insertion].name = NULL;
         }
@@ -139,7 +147,11 @@ void sauvegarder_score(Grille *grille_de_jeu, char *nom_labyrinthe) {
 
     Grille grille_sauvegarde;
     
-    charger_labyrinthe(&grille_sauvegarde, nom_labyrinthe);
+    // On recharge la grille d'origine (sans la trace du joueur) avant de réécrire le fichier
+    if (!charger_labyrinthe(&grille_sauvegarde, nom_labyrinthe)) {
+        fprintf(stderr, "Impossible de sauvegarder le score.\n");
+        return;
+    }
 
     CREATE_DIR("labyrinthe");
     char chemin_complet[100];

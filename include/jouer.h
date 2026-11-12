@@ -42,17 +42,21 @@ int mouvement_valide(Grille *grille, int x, int y, Joueur *joueur);
  * * Fait appel à la fonction **mouvement_valide** pour verifier si le mouvement est valide.
  * * Fait appel à la fonction **positionner_joueur** pour mettre à jour la position du joueur
  * @param grille Pointeur vers la Grille de jeu.
+ * * Une touche invalide ne déplace pas le joueur et ne compte pas de point.
+ * @param grille Pointeur vers la Grille de jeu.
  * @param joueur Pointeur vers la structure Joueur à déplacer.
+ * @return int 1 si une touche a été lue, 0 si l'entrée standard est fermée.
  */
-void mouvement_joueur(Grille *grille, Joueur *joueur);
+int mouvement_joueur(Grille *grille, Joueur *joueur);
 
 /**
  * @brief Boucle principale du jeu, gérant l'affichage et les mouvements jusqu'à la fin du jeu.
  * * Fait appel à la fonction **joueur_gagne** pour verifier que le joueur a la clé est arrivé à la sortie du labyrinthe.
  * @param grille Pointeur vers la Grille de jeu.
  * @param joueur Pointeur vers la structure Joueur.
+ * @return int 1 si le joueur a gagné, 0 si la partie a été abandonnée (fin de l'entrée).
  */
-void jouer_labyrinthe(Grille *grille, Joueur *joueur);
+int jouer_labyrinthe(Grille *grille, Joueur *joueur);
 
 /**
  * @brief Vérifie si le joueur a gagné la partie (possède la clé et est sur la sortie).
@@ -73,10 +77,10 @@ int get_score_joueur(Joueur *joueur);
  * @brief Vérifie si le score du joueur est un nouveau Top Score et met à jour le classement de la grille.
  * @param grille Pointeur vers la Grille dont le classement doit être mis à jour.
  * @param joueur Pointeur vers le joueur qui vient de terminer la partie.
- * @param nom_labyrinthe Nom du joueur à insérer dans le classement.
+ * @param nom_joueur Nom du joueur à insérer dans le classement (il est dupliqué).
  * @return int 1 si le classement a été mis à jour, 0 sinon.
  */
-int set_score_joueur(Grille *grille, Joueur *joueur, char *nom_labyrinthe);
+int set_score_joueur(Grille *grille, Joueur *joueur, char *nom_joueur);
 
 /**
  * @brief Sauvegarde le classement des scores contenu dans la grille_de_jeu dans le fichier du labyrinthe.
@@ -85,4 +89,4 @@ int set_score_joueur(Grille *grille, Joueur *joueur, char *nom_labyrinthe);
  */
 void sauvegarder_score(Grille *grille_de_jeu, char *nom_labyrinthe);
 
-#endif
+#endif

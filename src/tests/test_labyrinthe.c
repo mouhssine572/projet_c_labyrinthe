@@ -131,7 +131,7 @@ MU_TEST(test_chargement_persistence) {
         "#####\n"
         "150 Alpha\n"; 
     
-    mkdir("labyrinthe", 0777); 
+    CREATE_DIR("labyrinthe");
 
     FILE *f_mock = fopen("labyrinthe/" TEST_LABY_FILE, "w");
     if (!f_mock) {
@@ -147,7 +147,7 @@ MU_TEST(test_chargement_persistence) {
         g_loaded.top_scores[i].score = 0;
     }
     
-    charger_labyrinthe(&g_loaded, TEST_LABY_FILE);
+    mu_assert_int_eq(1, charger_labyrinthe(&g_loaded, TEST_LABY_FILE));
 
     mu_assert_int_eq(3, g_loaded.hauteur);
     mu_assert_int_eq(5, g_loaded.largeur);
@@ -155,7 +155,53 @@ MU_TEST(test_chargement_persistence) {
     mu_assert_int_eq(150, g_loaded.top_scores[0].score);
     mu_assert_int_eq(0, strcmp("Alpha", g_loaded.top_scores[0].name)); 
 
+    mu_check(g_loaded.top_scores[1].name == NULL); // Emplacements vides initialisés
+
     liberer_grille(&g_loaded);
+}
+
+MU_TEST(test_chargement_fichier_absent) {
+
+    Grille g_absent = {0};
+
+    // Un nom inexistant ne doit plus quitter le programme
+    mu_assert_int_eq(0, charger_labyrinthe(&g_absent, "fichier_qui_n_existe_pas"));
+    mu_check(g_absent.cases == NULL);
+}
+
+MU_TEST(test_allouer_grille_initialise_scores) {
+
+    Grille g_neuve;
+    memset(&g_neuve, 0xAB, sizeof(g_neuve)); // Simule une variable non initialisée
+
+    allouer_grille(&g_neuve, 3, 3);
+    for (int i = 0; i < NOMBRE_SCORE; i++) {
+        mu_check(g_neuve.top_scores[i].name == NULL);
+        mu_assert_int_eq(0, g_neuve.top_scores[i].score);
+    }
+
+    liberer_grille(&g_neuve); // Ne doit pas libérer de pointeur invalide
+}
+
+MU_TEST(test_sauvegarde_puis_chargement) {
+
+    CREATE_DIR("labyrinthe");
+    g->top_scores[0].name = strdup("Zoe");
+    g->top_scores[0].score = 42;
+    g->cases[1][1] = '$';
+
+    sauvegarder_labyrinthe(g, TEST_LABY_FILE);
+
+    Grille g_relu = {0};
+    mu_assert_int_eq(1, charger_labyrinthe(&g_relu, TEST_LABY_FILE));
+    mu_assert_int_eq(H_GRID, g_relu.hauteur);
+    mu_assert_int_eq(L_GRID, g_relu.largeur);
+    mu_assert_int_eq('$', g_relu.cases[1][1]);
+    mu_assert_int_eq('#', g_relu.cases[H_GRID - 1][L_GRID - 1]); // Dernière case bien lue
+    mu_assert_int_eq(42, g_relu.top_scores[0].score);
+    mu_assert_string_eq("Zoe", g_relu.top_scores[0].name);
+
+    liberer_grille(&g_relu);
 }
 
 
@@ -165,11 +211,14 @@ MU_TEST_SUITE(test_suite) {
     MU_RUN_TEST(test_creation_de_chemin_et_fusion);
     MU_RUN_TEST(test_etat_complet_et_finalisation);
     MU_RUN_TEST(test_sauvegarde_persistence);
-    MU_RUN_TEST(test_chargement_persistence); 
+    MU_RUN_TEST(test_chargement_persistence);
+    MU_RUN_TEST(test_chargement_fichier_absent);
+    MU_RUN_TEST(test_allouer_grille_initialise_scores);
+    MU_RUN_TEST(test_sauvegarde_puis_chargement);
 }
 
-int main(int /*argc*/, char * /*argv*/ []) {
+int main(void) {
     MU_RUN_SUITE(test_suite);
     MU_REPORT();
     return MU_EXIT_CODE;
-}
+}

@@ -141,7 +141,9 @@ Cela compilera et exécutera les deux suites de tests.
 
 ## 📝 Notes Importantes
 
-- Les dimensions du labyrinthe doivent être impaires et d'au moins 3
+- Les dimensions du labyrinthe (hauteur et largeur) doivent être impaires, entre 3 et 201 ; le programme redemande tant que la saisie est invalide
+- Une touche invalide pendant la partie ne déplace pas le joueur et ne compte pas de point
+- Fermer l'entrée (`Ctrl+D` sous Linux, `Ctrl+Z` puis Entrée sous Windows) abandonne la partie / quitte le programme
 - Chaque fichier de labyrinthe stocke la grille et le top 10 des scores
 - Les labyrinthes sont sauvegardés dans le dossier `labyrinthe/`
 - Le mode 2 (Difficile) est actuellement en cours de développement

@@ -104,9 +104,9 @@ $(TEST_LABY_EXEC): $(TEST_LABY_OBJS)
 
 # ----------------------------- Règles de nettoyage ----------------------------
 
-# Nettoyage des fichiers générés (.o et .d)
+# Nettoyage des fichiers générés (.o, .d et fichier temporaire des tests)
 clean:
-	@$(RM) $(BUILD_DIR)/*.o $(BUILD_DIR)/*.d
+	@$(RM) $(BUILD_DIR)/*.o $(BUILD_DIR)/*.d temp_input.txt
 
 # Nettoyage complet (supprime exécutables et dossiers)
 distclean: clean
