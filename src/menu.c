@@ -4,6 +4,7 @@
 #include <string.h>
 #include "menu.h"
 #include "jouer.h"
+#include "terminal.h"
 
 /* Vide le reste de la ligne courante sur l'entrée standard. */
 static void vider_ligne(void) {
@@ -45,24 +46,79 @@ void lire_mot(char *destination) {
     vider_ligne();
 }
 
-int get_action_initial(){
-    int choix;
+/* Affiche les lignes du menu, l'option sélectionnée étant mise en évidence. */
+static void afficher_options(const char *options[], int nbr_options, int selection) {
+    for (int i = 0; i < nbr_options; i++) {
+        printf("\r\033[2K"); // Efface la ligne avant de la réécrire
+        if (i == selection) {
+            printf("  " COULEUR_JAUNE "> %d - %s" COULEUR_RESET "\n", i + 1, options[i]);
+        } else {
+            printf("    %d - %s\n", i + 1, options[i]);
+        }
+    }
+    printf("\r\033[2K   (flèches haut/bas puis Entrée, ou tapez le numéro)\n");
+}
 
-    printf("\n Choississez une action parmi ce qui suit : \n");
-    printf("\n 1 - Créer un labyrinthe\n");
-    printf("\n 2 - Charger un labyrinthe\n");
-    printf("\n 3 - Jouer\n");
-    printf("\n 4 - Consulter les scores d'un labyrinthe\n");
-    printf("\n 5 - Consulter les règles du jeu\n");
-    printf("\n 6 - Quitter\n");
+/* Remonte le curseur au début du menu et le redessine sur place. */
+static void redessiner_options(const char *options[], int nbr_options, int selection) {
+    printf("\033[%dA", nbr_options + 1);
+    afficher_options(options, nbr_options, selection);
+}
 
-    choix = lire_entier();
-    while (choix < 1 || choix > 6) {
-        printf("Choix invalide, entrez un nombre entre 1 et 6 : ");
-        choix = lire_entier();
+int choisir_option(const char *titre, const char *options[], int nbr_options) {
+    int selection = 0;
+
+    printf("\n %s\n\n", titre);
+
+    // Entrée redirigée (fichier, tube) : on garde la saisie classique d'un numéro
+    if (!entree_est_terminal()) {
+        for (int i = 0; i < nbr_options; i++) {
+            printf("    %d - %s\n", i + 1, options[i]);
+        }
+        int choix = lire_entier();
+        while (choix < 1 || choix > nbr_options) {
+            printf("Choix invalide, entrez un nombre entre 1 et %d : ", nbr_options);
+            choix = lire_entier();
+        }
+        return choix - 1;
     }
 
-    return choix;
+    afficher_options(options, nbr_options, selection);
+
+    while (1) {
+        int touche = lire_touche();
+
+        if (touche == TOUCHE_FIN) {
+            printf("\nFin de l'entrée, le jeu se termine.\n");
+            exit(EXIT_SUCCESS);
+        } else if (touche == '\r' || touche == '\n' || touche == ' ') {
+            return selection;
+        } else if (touche >= '1' && touche <= '9' && touche - '1' < nbr_options) {
+            // Raccourci : le numéro sélectionne et valide directement l'option
+            selection = touche - '1';
+            redessiner_options(options, nbr_options, selection);
+            return selection;
+        } else if (touche == 'z') { // Flèche haut (ou z)
+            selection = (selection + nbr_options - 1) % nbr_options;
+            redessiner_options(options, nbr_options, selection);
+        } else if (touche == 's') { // Flèche bas (ou s)
+            selection = (selection + 1) % nbr_options;
+            redessiner_options(options, nbr_options, selection);
+        }
+    }
+}
+
+int get_action_initial(){
+    const char *options[] = {
+        "Créer un labyrinthe",
+        "Charger un labyrinthe",
+        "Jouer",
+        "Consulter les scores d'un labyrinthe",
+        "Consulter les règles du jeu",
+        "Quitter"
+    };
+
+    return choisir_option("Choisissez une action parmi ce qui suit :", options, 6) + 1;
 }
 
 int labyrinthe_disponible(void) {
@@ -149,43 +205,28 @@ void enregistrer_nom_joueur(const char *nom) {
     fclose(f);
 }
 
-/* Indique si le mot ne contient que des chiffres (un numéro de la liste). */
-static int est_numero(const char *mot) {
-    if (*mot == '\0') return 0;
-    for (; *mot; mot++) {
-        if (*mot < '0' || *mot > '9') return 0;
-    }
-    return 1;
-}
-
 int get_nom_joueur(char *nom_joueur) {
     char noms[NBR_JOUEURS_MAX][TAILLE_NOM];
     int nbr_noms = charger_noms_joueurs(noms);
 
-    if (nbr_noms > 0) {
-        printf("\n Joueurs déjà connus :\n");
-        for (int i = 0; i < nbr_noms; i++) {
-            printf("   %d - %s\n", i + 1, noms[i]);
-        }
-        printf("\n Tapez le numéro de votre nom, ou un nouveau nom (" MOT_RETOUR " pour revenir au menu) : \n");
-    } else {
-        printf("\n Nom du joueur (" MOT_RETOUR " pour revenir au menu) : \n");
+    // Menu : les joueurs connus, puis "Nouveau joueur" et "Revenir au menu"
+    const char *options[NBR_JOUEURS_MAX + 2];
+    for (int i = 0; i < nbr_noms; i++) {
+        options[i] = noms[i];
     }
+    options[nbr_noms] = "Nouveau joueur";
+    options[nbr_noms + 1] = "Revenir au menu";
 
-    while (1) {
+    int choix = choisir_option("Qui joue ?", options, nbr_noms + 2);
+
+    if (choix == nbr_noms + 1) {
+        return 0;
+    } else if (choix == nbr_noms) {
+        printf("\n Nom du nouveau joueur (" MOT_RETOUR " pour revenir au menu) : ");
         lire_mot(nom_joueur);
         if (est_retour(nom_joueur)) return 0;
-
-        if (nbr_noms > 0 && est_numero(nom_joueur)) {
-            int numero = atoi(nom_joueur);
-            if (numero >= 1 && numero <= nbr_noms) {
-                snprintf(nom_joueur, TAILLE_NOM, "%s", noms[numero - 1]);
-            } else {
-                printf("Numéro invalide, entrez un numéro entre 1 et %d ou un nom : ", nbr_noms);
-                continue;
-            }
-        }
-        break;
+    } else {
+        snprintf(nom_joueur, TAILLE_NOM, "%s", noms[choix]);
     }
 
     printf("Bonjour %s !\n", nom_joueur);
@@ -193,51 +234,62 @@ int get_nom_joueur(char *nom_joueur) {
     return 1;
 }
 
+/* Comparaison alphabétique pour qsort. */
+static int comparer_noms(const void *a, const void *b) {
+    return strcmp((const char *)a, (const char *)b);
+}
+
 int get_nom_labyrinthe(char *nom_labyrinthe) {
-    printf("\n Choissisez un labyrinthe de la liste (entrez le nom du fichier, " MOT_RETOUR " pour revenir au menu) : \n");
+    char fichiers[NBR_LABYRINTHES_MAX][TAILLE_NOM];
+    int nbr_fichiers = 0;
 
     DIR *d = opendir("labyrinthe");
-    int fichiers_trouves = 0;
-
     if (d) {
         struct dirent *dir;
 
-        while ((dir = readdir(d)) != NULL) {
-            // Ignorer les entrées système "." et ".."
-            if (strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0) {
-                printf("- %s\n", dir->d_name);
-                fichiers_trouves = 1;
-            }
+        while ((dir = readdir(d)) != NULL && nbr_fichiers < NBR_LABYRINTHES_MAX) {
+            // Ignorer les entrées système "." et ".." ainsi que les noms trop longs
+            if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0) continue;
+            if (strlen(dir->d_name) >= TAILLE_NOM) continue;
+            snprintf(fichiers[nbr_fichiers], TAILLE_NOM, "%s", dir->d_name);
+            nbr_fichiers++;
         }
         closedir(d);
     }
 
-    if (!fichiers_trouves) {
+    if (nbr_fichiers == 0) {
         printf("Aucun labyrinthe disponible pour le moment.\n");
+        return 0;
     }
 
-    lire_mot(nom_labyrinthe);
-    return !est_retour(nom_labyrinthe);
+    qsort(fichiers, nbr_fichiers, TAILLE_NOM, comparer_noms);
+
+    // Menu : les labyrinthes, puis "Revenir au menu"
+    const char *options[NBR_LABYRINTHES_MAX + 1];
+    for (int i = 0; i < nbr_fichiers; i++) {
+        options[i] = fichiers[i];
+    }
+    options[nbr_fichiers] = "Revenir au menu";
+
+    int choix = choisir_option("Choisissez un labyrinthe :", options, nbr_fichiers + 1);
+    if (choix == nbr_fichiers) return 0;
+
+    snprintf(nom_labyrinthe, TAILLE_NOM, "%s", fichiers[choix]);
+    return 1;
 }
 
 int get_mode_jeu() {
-    int mode;
+    const char *options[] = {
+        "Facile    (ogre qui erre au hasard, carte visible)",
+        "Difficile (brouillard, ogre chasseur, plus de pièges et moins de bonus)",
+        "Revenir au menu"
+    };
+    int choix = choisir_option("Choisissez un mode de jeu :", options, 3);
 
-    printf("Choisissez un mode de jeu :\n");
-    printf("Mode 1 : Facile    (ogre qui erre au hasard, carte visible)\n");
-    printf("Mode 2 : Difficile (brouillard, ogre chasseur, plus de pièges et moins de bonus)\n");
-    printf("%d : Revenir au menu\n", CHOIX_RETOUR);
+    if (choix == 2) return CHOIX_RETOUR;
 
-    mode = lire_entier();
-    while (mode != 1 && mode != 2 && mode != CHOIX_RETOUR) {
-        printf("Mode invalide, entrez 1, 2 ou %d : ", CHOIX_RETOUR);
-        mode = lire_entier();
-    }
-
-    if (mode != CHOIX_RETOUR) {
-        printf("Mode de jeu choisi : %d\n", mode);
-    }
-    return mode;
+    printf("Mode de jeu choisi : %s\n", choix == 0 ? "Facile" : "Difficile");
+    return choix + 1; // 1 = Facile, 2 = Difficile
 }
 
 /* Demande une dimension impaire comprise entre DIMENSION_MIN et DIMENSION_MAX.
@@ -314,7 +366,8 @@ void afficher_regles(void) {
     printf("   Plus le score est bas, meilleur il est : les 10 meilleurs sont enregistrés.\n");
 
     printf("\n Retour au menu :\n");
-    printf("   À chaque question, tapez %s pour revenir au menu principal.\n", MOT_RETOUR);
+    printf("   Dans les listes, choisissez « Revenir au menu » (flèches puis Entrée).\n");
+    printf("   Quand il faut taper un nom ou un nombre, tapez %s pour revenir au menu principal.\n", MOT_RETOUR);
 
     printf("\n===============================================\n");
     printf("\nAppuyez sur Entrée pour revenir au menu...");

@@ -9,6 +9,9 @@
 #define FICHIER_JOUEURS "joueurs.txt"
 #define NBR_JOUEURS_MAX 20
 
+/* Nombre maximal de labyrinthes proposés dans la liste de choix. */
+#define NBR_LABYRINTHES_MAX 100
+
 /* Dimensions autorisées pour un labyrinthe (valeurs impaires). */
 #define DIMENSION_MIN 3
 #define DIMENSION_MAX 201
@@ -35,8 +38,19 @@ int lire_entier(void);
 void lire_mot(char *destination);
 
 /**
+ * @brief Affiche un menu navigable avec les flèches haut/bas, validé par Entrée.
+ * * On peut aussi taper directement le numéro d'une option (1 à 9).
+ * * Si l'entrée n'est pas un terminal, l'utilisateur saisit simplement le numéro.
+ * @param titre Titre affiché au-dessus des options.
+ * @param options Libellés des options.
+ * @param nbr_options Nombre d'options.
+ * @return int L'indice (à partir de 0) de l'option choisie.
+ */
+int choisir_option(const char *titre, const char *options[], int nbr_options);
+
+/**
  * @brief Affiche le menu principal et récupère le choix initial de l'utilisateur.
- * * Redemande tant que le choix n'est pas compris entre 1 et 6.
+ * * Navigation avec les flèches (voir choisir_option).
  * @return int Le numéro de l'action choisie (1 à 6).
  */
 int get_action_initial();
@@ -48,10 +62,10 @@ int get_action_initial();
 int labyrinthe_disponible(void);
 
 /**
- * @brief Liste les fichiers de labyrinthe existants et demande à l'utilisateur de choisir un nom de fichier.
- * *Tente d'ouvrir le répertoire "labyrinthe" et affiche tous les fichiers trouvés.
- * @param nom_labyrinthe Buffer d'au moins TAILLE_NOM octets où stocker le nom saisi.
- * @return int 0 si l'utilisateur a demandé à revenir au menu (MOT_RETOUR), 1 sinon.
+ * @brief Liste les labyrinthes du répertoire "labyrinthe" (ordre alphabétique) dans un menu
+ *        navigable avec les flèches, suivi de l'option « Revenir au menu ».
+ * @param nom_labyrinthe Buffer d'au moins TAILLE_NOM octets où stocker le nom choisi.
+ * @return int 0 si l'utilisateur revient au menu (ou si aucun labyrinthe n'existe), 1 sinon.
  */
 int get_nom_labyrinthe(char *nom_labyrinthe);
 
@@ -72,15 +86,15 @@ void enregistrer_nom_joueur(const char *nom);
 
 /**
  * @brief Demande le nom du joueur.
- * * Les joueurs déjà connus (sessions précédentes) sont listés avec un numéro :
- *   on peut taper ce numéro pour reprendre un nom, ou taper un nouveau nom.
+ * * Menu navigable avec les flèches : les joueurs déjà connus (sessions précédentes),
+ *   puis « Nouveau joueur » (le nom est alors saisi au clavier) et « Revenir au menu ».
  * @param nom_joueur Buffer d'au moins TAILLE_NOM octets où stocker le nom choisi.
- * @return int 0 si l'utilisateur a demandé à revenir au menu (MOT_RETOUR), 1 sinon.
+ * @return int 0 si l'utilisateur a demandé à revenir au menu, 1 sinon.
  */
 int get_nom_joueur(char *nom_joueur);
 
 /**
- * @brief Demande à l'utilisateur de choisir un mode de jeu et s'assure que l'entrée est valide (1, 2 ou CHOIX_RETOUR).
+ * @brief Demande à l'utilisateur de choisir un mode de jeu (menu navigable avec les flèches).
  * @return int Le mode de jeu choisi (1 pour Facile, 2 pour Difficile), CHOIX_RETOUR pour revenir au menu.
  */
 int get_mode_jeu();

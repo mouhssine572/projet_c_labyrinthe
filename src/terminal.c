@@ -121,6 +121,10 @@ int lire_touche(void) {
     return tolower(c);
 }
 
+int entree_est_terminal(void) {
+    return ENTREE_EST_TERMINAL() ? 1 : 0;
+}
+
 void effacer_ecran(void) {
     printf("\033[H\033[2J");
 }

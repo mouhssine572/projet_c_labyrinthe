@@ -32,6 +32,12 @@ void initialiser_terminal(void);
 int lire_touche(void);
 
 /**
+ * @brief Indique si l'entrée standard est un terminal interactif (clavier).
+ * @return int 1 si c'est un terminal, 0 si l'entrée est redirigée (fichier, tube, tests).
+ */
+int entree_est_terminal(void);
+
+/**
  * @brief Efface l'écran et replace le curseur en haut à gauche.
  */
 void effacer_ecran(void);
