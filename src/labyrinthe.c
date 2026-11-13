@@ -1,7 +1,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include "labyrinthe.h"
 #include "terminal.h"
 
@@ -131,12 +130,6 @@ void afficher_labyrinthe(Grille *grille){
 }
 
 void construire_labyrinthe(Cellule *cellules, Grille *grille){
-    static int initialised = 0;
-    if (!initialised) {
-        srand(time(NULL));
-        initialised = 1;
-    }
-
     int i_random, j_random;
     int ci1, cj1, ci2, cj2;
     int nbr_cellules_verticales = cellules->nbr_cellules_verticales;
@@ -336,12 +329,6 @@ static int compter_cases_libres(Grille *grille){
 }
 
 int drop_motif(Grille *grille, char motif){
-    static int initialised = 0;
-    if (!initialised) {
-        srand(time(NULL));
-        initialised = 1;
-    }
-
     // Sans case libre, la boucle de tirage ne se terminerait jamais
     if (compter_cases_libres(grille) == 0) return 0;
 
@@ -367,8 +354,9 @@ void placer_motifs(Grille *grille, int mode){
     drop_motif(grille, MOTIF_KEY);
 
     // Difficile : deux fois plus de pièges, deux fois moins de bonus
-    int nbr_pieges = (int)(surface * (difficile ? 0.04 : 0.02));
-    int nbr_bonus  = (int)(surface * (difficile ? 0.01 : 0.02));
+    // Pourcentages de la surface (4 % / 2 % de pièges, 1 % / 2 % de bonus), calculés en entiers
+    int nbr_pieges = surface * (difficile ? 4 : 2) / 100;
+    int nbr_bonus  = surface * (difficile ? 1 : 2) / 100;
 
     for (int k = 0; k < nbr_pieges; k++) drop_motif(grille, MOTIF_TRAP);
     for (int k = 0; k < nbr_bonus; k++)  drop_motif(grille, MOTIF_BOOST);

@@ -53,13 +53,28 @@ int choisir_option(const char *titre, const char *options[], int nbr_options);
  * * Navigation avec les flèches (voir choisir_option).
  * @return int Le numéro de l'action choisie (1 à 6).
  */
-int get_action_initial();
+int get_action_initial(void);
 
 /**
  * @brief Indique si au moins un labyrinthe est disponible dans le répertoire "labyrinthe".
  * @return int 1 si au moins un fichier de labyrinthe existe, 0 sinon.
  */
 int labyrinthe_disponible(void);
+
+/**
+ * @brief Indique si un labyrinthe portant ce nom existe déjà dans le répertoire "labyrinthe".
+ * @param nom Nom du fichier de labyrinthe.
+ * @return int 1 s'il existe, 0 sinon.
+ */
+int labyrinthe_existe(const char *nom);
+
+/**
+ * @brief Vérifie qu'un nom ne contient que des lettres (sans accent), des chiffres, '_' ou '-'.
+ * * Empêche les chemins comme "../fichier" qui feraient écrire en dehors du dossier labyrinthe/.
+ * @param nom Nom à vérifier.
+ * @return int 1 si le nom est valide (et non vide), 0 sinon.
+ */
+int nom_valide(const char *nom);
 
 /**
  * @brief Liste les labyrinthes du répertoire "labyrinthe" (ordre alphabétique) dans un menu
@@ -97,7 +112,7 @@ int get_nom_joueur(char *nom_joueur);
  * @brief Demande à l'utilisateur de choisir un mode de jeu (menu navigable avec les flèches).
  * @return int Le mode de jeu choisi (1 pour Facile, 2 pour Difficile), CHOIX_RETOUR pour revenir au menu.
  */
-int get_mode_jeu();
+int get_mode_jeu(void);
 
 /**
  * @brief Demande et récupère la hauteur, la largeur et le nom du labyrinthe.
@@ -105,6 +120,7 @@ int get_mode_jeu();
  * @param hauteur Pointeur vers l'entier qui stockera la hauteur.
  * @param largeur Pointeur vers l'entier qui stockera la largeur.
  * @param nom Buffer d'au moins TAILLE_NOM octets qui stockera le nom du labyrinthe.
+ * * Le nom doit être valide (voir nom_valide). S'il est déjà pris, on demande avant d'écraser.
  * @return int 0 si l'utilisateur a demandé à revenir au menu à l'une des questions, 1 sinon.
  */
 int get_parametres_labyrinthe(int *hauteur, int *largeur, char *nom);

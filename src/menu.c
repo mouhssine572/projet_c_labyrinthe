@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <string.h>
+#include <ctype.h>
 #include "menu.h"
 #include "jouer.h"
 #include "terminal.h"
@@ -44,6 +45,25 @@ void lire_mot(char *destination) {
     int res = scanf("%" STR(TAILLE_NOM_MAX) "s", destination);
     verifier_fin_entree(res);
     vider_ligne();
+}
+
+int nom_valide(const char *nom) {
+    if (*nom == '\0') return 0;
+    for (; *nom; nom++) {
+        if (!isalnum((unsigned char) *nom) && *nom != '_' && *nom != '-') return 0;
+    }
+    return 1;
+}
+
+/* Affiche l'invite et lit un nom, en redemandant tant qu'il contient des caractères interdits.
+ * Empêche par exemple un nom comme "../fichier" qui ferait écrire hors du dossier labyrinthe/. */
+static void lire_nom(const char *invite, char *nom) {
+    while (1) {
+        printf("%s", invite);
+        lire_mot(nom);
+        if (nom_valide(nom)) return;
+        printf("Nom invalide : utilisez seulement des lettres (sans accent), des chiffres, _ ou -.\n");
+    }
 }
 
 /* Affiche les lignes du menu, l'option sélectionnée étant mise en évidence. */
@@ -108,7 +128,7 @@ int choisir_option(const char *titre, const char *options[], int nbr_options) {
     }
 }
 
-int get_action_initial(){
+int get_action_initial(void){
     const char *options[] = {
         "Créer un labyrinthe",
         "Charger un labyrinthe",
@@ -137,6 +157,16 @@ int labyrinthe_disponible(void) {
     }
 
     return trouve;
+}
+
+int labyrinthe_existe(const char *nom) {
+    char chemin[TAILLE_NOM + 16];
+    snprintf(chemin, sizeof chemin, "labyrinthe/%s", nom);
+
+    FILE *f = fopen(chemin, "r");
+    if (f == NULL) return 0;
+    fclose(f);
+    return 1;
 }
 
 /* Ajoute un nom à la liste s'il n'y est pas déjà. Renvoie le nouveau nombre de noms. */
@@ -222,8 +252,8 @@ int get_nom_joueur(char *nom_joueur) {
     if (choix == nbr_noms + 1) {
         return 0;
     } else if (choix == nbr_noms) {
-        printf("\n Nom du nouveau joueur (" MOT_RETOUR " pour revenir au menu) : ");
-        lire_mot(nom_joueur);
+        lire_nom("\n Nom du nouveau joueur (lettres, chiffres, _ ou - ; " MOT_RETOUR " pour revenir au menu) : ",
+                 nom_joueur);
         if (est_retour(nom_joueur)) return 0;
     } else {
         snprintf(nom_joueur, TAILLE_NOM, "%s", noms[choix]);
@@ -278,7 +308,7 @@ int get_nom_labyrinthe(char *nom_labyrinthe) {
     return 1;
 }
 
-int get_mode_jeu() {
+int get_mode_jeu(void) {
     const char *options[] = {
         "Facile    (pas de monstres)",
         "Difficile (ogre chasseur, fantôme, plus de pièges et moins de bonus)",
@@ -322,9 +352,24 @@ int get_parametres_labyrinthe(int *hauteur, int *largeur, char *nom){
     *largeur = lire_dimension("Largeur");
     if (*largeur == CHOIX_RETOUR) return 0;
 
-    printf("\nNom du labyrinthe (" MOT_RETOUR " pour revenir au menu) : ");
-    lire_mot(nom);
-    return !est_retour(nom);
+    while (1) {
+        lire_nom("\nNom du labyrinthe (lettres, chiffres, _ ou - ; " MOT_RETOUR " pour revenir au menu) : ", nom);
+        if (est_retour(nom)) return 0;
+        if (!labyrinthe_existe(nom)) return 1;
+
+        // Un labyrinthe porte déjà ce nom : on demande avant d'écraser son fichier et son top 10
+        char titre[TAILLE_NOM + 64];
+        const char *options[] = {
+            "Oui, l'écraser (son top 10 sera perdu)",
+            "Non, choisir un autre nom",
+            "Revenir au menu"
+        };
+        snprintf(titre, sizeof titre, "Le labyrinthe \"%s\" existe déjà. L'écraser ?", nom);
+
+        int choix = choisir_option(titre, options, 3);
+        if (choix == 0) return 1;
+        if (choix == 2) return 0;
+    }
 }
 
 void afficher_regles(void) {

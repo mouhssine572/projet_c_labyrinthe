@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include "jouer.h"
 #include "labyrinthe.h"
 #include "terminal.h"
@@ -343,7 +342,6 @@ int jouer_labyrinthe(Grille *grille, Joueur *joueur){
     Monstre *monstres[NBR_MONSTRES_MAX] = {&fantome, &ogre}; // L'ogre est dessiné par-dessus le fantôme
     int difficile = (grille->mode == MODE_DIFFICILE);
 
-    srand((unsigned) time(NULL));
     initialiser_monstre(&ogre, MOTIF_OGRE, 0);
     initialiser_monstre(&fantome, MOTIF_FANTOME, 1);
     ogre.chasseur = difficile;
@@ -399,8 +397,8 @@ int jouer_labyrinthe(Grille *grille, Joueur *joueur){
 
 int joueur_gagne(Grille *grille, Joueur *joueur){
     if(joueur -> have_key == 0) return 0;
-    if(grille->cases[grille->hauteur - 1][grille->largeur - 2] != MOTIF_JOUEUR) return 0;
-    return 1;
+    // La sortie est toujours sur la dernière ligne, avant-dernière colonne
+    return joueur->x == grille->hauteur - 1 && joueur->y == grille->largeur - 2;
 }
 
 int get_score_joueur(Joueur *joueur){

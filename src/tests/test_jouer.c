@@ -277,7 +277,13 @@ MU_TEST(test_sortie_fermee_sans_cle) {
 
 MU_TEST(test_joueur_gagne) {
     // La sortie de la grille 3x5 est en (2,3)
-    g->cases[2][3] = MOTIF_JOUEUR;
+    j->x = 1;
+    j->y = 1;
+    j->have_key = 1;
+    mu_assert_int_eq(0, joueur_gagne(g, j));    // Avec la clé mais pas sur la sortie
+
+    j->x = 2;
+    j->y = 3;
 
     j->have_key = 0;
     mu_assert_int_eq(0, joueur_gagne(g, j));
