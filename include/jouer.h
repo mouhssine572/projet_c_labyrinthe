@@ -19,9 +19,7 @@
 #define PENALITE_PIEGE 6
 #define GAIN_BONUS 6
 
-/* Mode Difficile : rayon de vision autour du joueur (brouillard)
- * et distance (en cases de couloir) à partir de laquelle l'ogre chasse le joueur. */
-#define RAYON_BROUILLARD 3
+/* Mode Difficile : distance (en cases de couloir) à partir de laquelle l'ogre chasse le joueur. */
 #define RAYON_CHASSE 10
 
 /* Taille du message affiché sous le labyrinthe. */
@@ -129,19 +127,18 @@ void fantome_attrape_joueur(Grille *grille, Monstre *fantome, Joueur *joueur);
 /**
  * @brief Affiche le labyrinthe en couleur avec les monstres dessinés par-dessus
  * (le dernier du tableau est au premier plan).
- * * En mode Difficile, seules les cases à moins de RAYON_BROUILLARD du joueur sont visibles.
  * @param grille Pointeur vers la Grille de jeu (restaurée à l'identique après l'affichage).
- * @param joueur Pointeur vers le Joueur (centre de la zone visible).
  * @param monstres Tableau de pointeurs vers les monstres.
  * @param nbr_monstres Nombre de monstres (au plus NBR_MONSTRES_MAX).
  */
-void afficher_jeu(Grille *grille, Joueur *joueur, Monstre *monstres[], int nbr_monstres);
+void afficher_jeu(Grille *grille, Monstre *monstres[], int nbr_monstres);
 
 /**
  * @brief Boucle principale du jeu : efface l'écran, affiche la carte, la légende et le score,
  * puis gère les mouvements jusqu'à la fin de la partie.
  * * Fait appel à la fonction **joueur_gagne** pour verifier que le joueur a la clé et est arrivé à la sortie.
- * * Après chaque tour, l'ogre ('G') et le fantôme ('F') se déplacent (l'ogre chasse en mode Difficile).
+ * * En mode Difficile seulement, l'ogre ('G', chasseur) et le fantôme ('F') sont présents
+ *   et se déplacent après chaque tour. En mode Facile, il n'y a aucun monstre.
  * * Si l'ogre attrape le joueur, la partie est perdue ; si le fantôme l'attrape, le score est doublé.
  * @param grille Pointeur vers la Grille de jeu.
  * @param joueur Pointeur vers la structure Joueur.

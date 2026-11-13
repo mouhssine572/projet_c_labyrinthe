@@ -204,7 +204,7 @@ MU_TEST(test_afficher_jeu_restaure_grille) {
     fantome.y = 3;
     fantome.actif = 1;
 
-    afficher_jeu(g, j, monstres, 1);
+    afficher_jeu(g, monstres, 1);
     mu_assert_int_eq('#', g->cases[1][3]);              // Le mur sous le fantôme est restauré
 }
 

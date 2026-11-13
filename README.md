@@ -20,15 +20,15 @@ Ce projet est un jeu de labyrinthe interactif développé en C. Le programme per
 
 ### 3. **Motifs et Pièges**
 - **Clé ($)** : Une seule par labyrinthe ; à récupérer pour pouvoir sortir
-- **Ogre (G)** : Se déplace d'une case au hasard à chaque tour (sans traverser les murs) ; s'il attrape le joueur, la partie est perdue. En mode Difficile, il **chasse** le joueur (plus court chemin) dès que celui-ci est à moins de 10 cases de couloir
-- **Fantôme (F)** : Se déplace d'une case au hasard à chaque tour et traverse les murs ; s'il attrape le joueur, la partie continue mais le score est doublé, puis le fantôme réapparaît ailleurs
+- **Ogre (G)** *(mode Difficile uniquement)* : Ne traverse pas les murs ; il **chasse** le joueur (plus court chemin) dès que celui-ci est à moins de 10 cases de couloir, sinon il erre au hasard. S'il attrape le joueur, la partie est perdue
+- **Fantôme (F)** *(mode Difficile uniquement)* : Se déplace d'une case au hasard à chaque tour et traverse les murs ; s'il attrape le joueur, la partie continue mais le score est doublé, puis le fantôme réapparaît ailleurs
 - **Pièges (@)** : Ajoutent 6 points de pénalité au score. **Ils restent en place** et pénalisent à chaque passage
 - **Bonus (&)** : Retirent 6 points (minimum 0). **Ils disparaissent** une fois ramassés (usage unique)
 
 ### 4. **Modes de jeu**
 Le mode est choisi à la création et enregistré dans le fichier du labyrinthe.
-- **Facile** : carte entièrement visible, ogre qui erre au hasard
-- **Difficile** : brouillard (seules les cases à 3 de distance autour du joueur sont visibles), ogre chasseur, deux fois plus de pièges et deux fois moins de bonus
+- **Facile** : ni ogre ni fantôme
+- **Difficile** : ogre chasseur et fantôme, deux fois plus de pièges et deux fois moins de bonus
 
 ### 5. **Gestion des Scores**
 - Top 10 des meilleurs scores enregistrés par labyrinthe

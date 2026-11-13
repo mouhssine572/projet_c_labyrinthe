@@ -256,8 +256,8 @@ int deplacer_monstre(Grille *grille, Monstre *monstre, Joueur *joueur){
     return monstre_attrape_joueur(monstre, joueur);
 }
 
-/* Affiche la grille ; si brouillard vaut 1, seules les cases proches du joueur sont visibles. */
-static void afficher_plateau(Grille *grille, Joueur *joueur, Monstre *monstres[], int nbr_monstres, int brouillard){
+/* Affiche toute la grille, avec les monstres dessinés par-dessus. */
+static void afficher_plateau(Grille *grille, Monstre *monstres[], int nbr_monstres){
     char cases_dessous[NBR_MONSTRES_MAX];
 
     // Les monstres ne sont pas stockés dans la grille : on les dessine seulement pour l'affichage
@@ -271,11 +271,7 @@ static void afficher_plateau(Grille *grille, Joueur *joueur, Monstre *monstres[]
 
     for (int i = 0; i < grille->hauteur; i++) {
         for (int j = 0; j < grille->largeur; j++) {
-            if (brouillard && (abs(i - joueur->x) > RAYON_BROUILLARD || abs(j - joueur->y) > RAYON_BROUILLARD)) {
-                putchar(' ');
-            } else {
-                afficher_case(grille->cases[i][j]);
-            }
+            afficher_case(grille->cases[i][j]);
         }
         putchar('\n');
     }
@@ -289,8 +285,8 @@ static void afficher_plateau(Grille *grille, Joueur *joueur, Monstre *monstres[]
     }
 }
 
-void afficher_jeu(Grille *grille, Joueur *joueur, Monstre *monstres[], int nbr_monstres){
-    afficher_plateau(grille, joueur, monstres, nbr_monstres, grille->mode == MODE_DIFFICILE);
+void afficher_jeu(Grille *grille, Monstre *monstres[], int nbr_monstres){
+    afficher_plateau(grille, monstres, nbr_monstres);
 }
 
 /* Affiche une entrée de la légende : le symbole en couleur suivi de sa signification. */
@@ -312,9 +308,11 @@ static void afficher_informations(Grille *grille, Joueur *joueur){
     legende(MOTIF_SORTIE, "sortie");
     legende(MOTIF_TRAP, "piège");
     legende(MOTIF_BOOST, "bonus");
-    printf("\n ");
-    legende(MOTIF_OGRE, "ogre");
-    legende(MOTIF_FANTOME, "fantôme");
+    if (grille->mode == MODE_DIFFICILE) { // Pas de monstres en mode Facile
+        printf("\n ");
+        legende(MOTIF_OGRE, "ogre");
+        legende(MOTIF_FANTOME, "fantôme");
+    }
     printf("\n\n Déplacements : z q s d ou flèches   |   %c : revenir au menu\n", MVT_TOUCHE_RETOUR);
 
     if (joueur->message[0] != '\0') {
@@ -323,9 +321,9 @@ static void afficher_informations(Grille *grille, Joueur *joueur){
 }
 
 /* Efface l'écran puis affiche la carte et les informations de la partie. */
-static void afficher_tour(Grille *grille, Joueur *joueur, Monstre *monstres[], int brouillard){
+static void afficher_tour(Grille *grille, Joueur *joueur, Monstre *monstres[]){
     effacer_ecran();
-    afficher_plateau(grille, joueur, monstres, NBR_MONSTRES_MAX, brouillard);
+    afficher_plateau(grille, monstres, NBR_MONSTRES_MAX);
     afficher_informations(grille, joueur);
 }
 
@@ -349,17 +347,22 @@ int jouer_labyrinthe(Grille *grille, Joueur *joueur){
     initialiser_monstre(&ogre, MOTIF_OGRE, 0);
     initialiser_monstre(&fantome, MOTIF_FANTOME, 1);
     ogre.chasseur = difficile;
-    placer_monstre(grille, &ogre, joueur);
-    placer_monstre(grille, &fantome, joueur);
+
+    // Les monstres n'existent qu'en mode Difficile : en Facile ils restent inactifs
+    // (ni affichés, ni déplacés, ils ne peuvent pas attraper le joueur).
+    if (difficile) {
+        placer_monstre(grille, &ogre, joueur);
+        placer_monstre(grille, &fantome, joueur);
+    }
 
     // Le joueur est affiché dès le départ, sur l'entrée (sans compter de point)
     joueur->case_dessous = grille->cases[joueur->x][joueur->y];
     grille->cases[joueur->x][joueur->y] = MOTIF_JOUEUR;
     snprintf(joueur->message, TAILLE_MESSAGE, "Ramassez la clé (%c) puis rejoignez la sortie (%c).%s",
-             MOTIF_KEY, MOTIF_SORTIE, difficile ? " Attention : brouillard et ogre chasseur !" : "");
+             MOTIF_KEY, MOTIF_SORTIE, difficile ? " Attention : ogre chasseur et fantôme !" : "");
 
     while (1) {
-        afficher_tour(grille, joueur, monstres, difficile);
+        afficher_tour(grille, joueur, monstres);
         joueur->message[0] = '\0';
 
         int resultat = mouvement_joueur(grille, joueur);
@@ -380,7 +383,7 @@ int jouer_labyrinthe(Grille *grille, Joueur *joueur){
         if (joueur_gagne(grille, joueur)) {
             snprintf(joueur->message, TAILLE_MESSAGE,
                      "Bravo, vous avez trouvé la sortie avec un score de %d !", get_score_joueur(joueur));
-            afficher_tour(grille, joueur, monstres, 0); // Toute la carte est révélée
+            afficher_tour(grille, joueur, monstres);
             return 1;
         }
 
@@ -390,7 +393,7 @@ int jouer_labyrinthe(Grille *grille, Joueur *joueur){
     }
 
     snprintf(joueur->message, TAILLE_MESSAGE, "L'ogre (%c) vous a attrapé ! Partie terminée.", MOTIF_OGRE);
-    afficher_tour(grille, joueur, monstres, 0);
+    afficher_tour(grille, joueur, monstres);
     return 0;
 }
 

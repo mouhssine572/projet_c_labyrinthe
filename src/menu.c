@@ -280,8 +280,8 @@ int get_nom_labyrinthe(char *nom_labyrinthe) {
 
 int get_mode_jeu() {
     const char *options[] = {
-        "Facile    (ogre qui erre au hasard, carte visible)",
-        "Difficile (brouillard, ogre chasseur, plus de pièges et moins de bonus)",
+        "Facile    (pas de monstres)",
+        "Difficile (ogre chasseur, fantôme, plus de pièges et moins de bonus)",
         "Revenir au menu"
     };
     int choix = choisir_option("Choisissez un mode de jeu :", options, 3);
@@ -349,16 +349,16 @@ void afficher_regles(void) {
            MOTIF_TRAP, PENALITE_PIEGE);
     printf("   %c  Bonus : retire %d points au score (minimum 0). Il disparaît une fois pris.\n",
            MOTIF_BOOST, GAIN_BONUS);
-    printf("   %c  Ogre : se déplace d'une case au hasard à chaque tour, sans traverser les murs.\n", MOTIF_OGRE);
-    printf("      En mode Difficile, il vous chasse dès que vous êtes à moins de %d cases.\n", RAYON_CHASSE);
+    printf("   %c  Ogre (mode Difficile uniquement) : ne traverse pas les murs.\n", MOTIF_OGRE);
+    printf("      Il vous chasse dès que vous êtes à moins de %d cases, sinon il erre au hasard.\n", RAYON_CHASSE);
     printf("      S'il vous attrape, la partie est perdue et votre score n'est pas enregistré.\n");
-    printf("   %c  Fantôme : se déplace d'une case au hasard à chaque tour et traverse les murs.\n", MOTIF_FANTOME);
+    printf("   %c  Fantôme (mode Difficile uniquement) : se déplace au hasard et traverse les murs.\n", MOTIF_FANTOME);
     printf("      S'il vous attrape, la partie continue mais votre score est doublé ;\n");
     printf("      le fantôme réapparaît alors ailleurs dans le labyrinthe.\n");
 
-    printf("\n Mode Difficile :\n");
-    printf("   Brouillard : vous ne voyez que les cases à %d de distance autour de vous.\n", RAYON_BROUILLARD);
-    printf("   Ogre chasseur, plus de pièges et moins de bonus.\n");
+    printf("\n Modes de jeu (choisis à la création, enregistrés dans le labyrinthe) :\n");
+    printf("   Facile    : ni ogre ni fantôme.\n");
+    printf("   Difficile : ogre chasseur et fantôme, deux fois plus de pièges et deux fois moins de bonus.\n");
 
     printf("\n Score :\n");
     printf("   Chaque déplacement ajoute 1 point (même contre un mur).\n");
