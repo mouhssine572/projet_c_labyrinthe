@@ -337,6 +337,25 @@ void fantome_attrape_joueur(Grille *grille, Monstre *fantome, Joueur *joueur){
     placer_monstre(grille, fantome, joueur);
 }
 
+void preparer_monstres(Grille *grille, Monstre *ogre, Monstre *fantome, Joueur *joueur){
+    int difficile = (grille->mode == MODE_DIFFICILE);
+    int normal = (grille->mode == MODE_NORMAL);
+
+    initialiser_monstre(ogre, MOTIF_OGRE, 0);
+    initialiser_monstre(fantome, MOTIF_FANTOME, 1);
+    ogre->chasseur = difficile;
+
+    // Les monstres non placés restent inactifs (ni affichés, ni déplacés, ils ne peuvent pas
+    // attraper le joueur) : Facile n'a aucun monstre, Normal seulement un ogre qui erre au hasard,
+    // Difficile un ogre chasseur et le fantôme.
+    if (difficile || normal) {
+        placer_monstre(grille, ogre, joueur);
+    }
+    if (difficile) {
+        placer_monstre(grille, fantome, joueur);
+    }
+}
+
 int jouer_labyrinthe(Grille *grille, Joueur *joueur){
     Monstre ogre;
     Monstre fantome;
@@ -344,19 +363,7 @@ int jouer_labyrinthe(Grille *grille, Joueur *joueur){
     int difficile = (grille->mode == MODE_DIFFICILE);
     int normal = (grille->mode == MODE_NORMAL);
 
-    initialiser_monstre(&ogre, MOTIF_OGRE, 0);
-    initialiser_monstre(&fantome, MOTIF_FANTOME, 1);
-    ogre.chasseur = difficile;
-
-    // Les monstres non placés restent inactifs (ni affichés, ni déplacés, ils ne peuvent pas
-    // attraper le joueur) : Facile n'a aucun monstre, Normal seulement un ogre qui erre au hasard,
-    // Difficile un ogre chasseur et le fantôme.
-    if (difficile || normal) {
-        placer_monstre(grille, &ogre, joueur);
-    }
-    if (difficile) {
-        placer_monstre(grille, &fantome, joueur);
-    }
+    preparer_monstres(grille, &ogre, &fantome, joueur);
 
     // Le joueur est affiché dès le départ, sur l'entrée (sans compter de point)
     joueur->case_dessous = grille->cases[joueur->x][joueur->y];

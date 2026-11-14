@@ -196,6 +196,43 @@ MU_TEST(test_placer_monstre) {
     mu_assert_int_eq(' ', g->cases[1][2]);              // Le monstre n'est pas écrit dans la grille
 }
 
+MU_TEST(test_monstres_mode_facile) {
+    Monstre ogre, fantome;
+    g->mode = MODE_FACILE;
+
+    preparer_monstres(g, &ogre, &fantome, j);
+    mu_assert_int_eq(0, ogre.actif);                 // Aucun monstre
+    mu_assert_int_eq(0, fantome.actif);
+
+    // Un monstre inactif ne bouge pas et n'attrape personne
+    mu_assert_int_eq(0, deplacer_monstre(g, &ogre, j));
+    j->x = ogre.x;
+    j->y = ogre.y;
+    mu_assert_int_eq(0, monstre_attrape_joueur(&ogre, j));
+}
+
+MU_TEST(test_monstres_mode_normal) {
+    Monstre ogre, fantome;
+    g->mode = MODE_NORMAL;
+
+    preparer_monstres(g, &ogre, &fantome, j);
+    mu_assert_int_eq(1, ogre.actif);                 // L'ogre est là...
+    mu_assert_int_eq(0, ogre.chasseur);              // ...mais il ne chasse pas
+    mu_assert_int_eq(0, fantome.actif);              // Pas de fantôme
+}
+
+MU_TEST(test_monstres_mode_difficile) {
+    Monstre ogre, fantome;
+    g->mode = MODE_DIFFICILE;
+
+    preparer_monstres(g, &ogre, &fantome, j);
+    mu_assert_int_eq(1, ogre.actif);
+    mu_assert_int_eq(1, ogre.chasseur);              // Ogre chasseur
+    mu_assert_int_eq(1, fantome.actif);              // Fantôme présent
+    mu_assert_int_eq(1, fantome.traverse_murs);
+    mu_assert_int_eq(0, ogre.traverse_murs);
+}
+
 MU_TEST(test_afficher_jeu_restaure_grille) {
     Monstre fantome;
     Monstre *monstres[NBR_MONSTRES_MAX] = {&fantome};
@@ -348,6 +385,9 @@ MU_TEST_SUITE(test_suite) {
     MU_RUN_TEST(test_deplacer_fantome);
     MU_RUN_TEST(test_fantome_double_score);
     MU_RUN_TEST(test_placer_monstre);
+    MU_RUN_TEST(test_monstres_mode_facile);
+    MU_RUN_TEST(test_monstres_mode_normal);
+    MU_RUN_TEST(test_monstres_mode_difficile);
     MU_RUN_TEST(test_afficher_jeu_restaure_grille);
     MU_RUN_TEST(test_set_score_joueur);
     MU_RUN_TEST(test_piege_reste_bonus_disparait);

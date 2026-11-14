@@ -99,6 +99,17 @@ void initialiser_monstre(Monstre *monstre, char symbole, int traverse_murs);
 void placer_monstre(Grille *grille, Monstre *monstre, Joueur *joueur);
 
 /**
+ * @brief Initialise et place les monstres d'une partie selon le mode du labyrinthe.
+ * * Facile : aucun monstre actif. Normal : l'ogre seul, qui erre sans chasser.
+ *   Difficile : l'ogre chasseur et le fantôme. Un monstre absent reste inactif.
+ * @param grille Pointeur vers la Grille de jeu (son champ mode est lu).
+ * @param ogre Pointeur vers l'ogre à préparer.
+ * @param fantome Pointeur vers le fantôme à préparer.
+ * @param joueur Pointeur vers le Joueur (les monstres sont placés loin de lui).
+ */
+void preparer_monstres(Grille *grille, Monstre *ogre, Monstre *fantome, Joueur *joueur);
+
+/**
  * @brief Déplace un monstre d'une case, sans sortir de l'intérieur du labyrinthe.
  * * Un monstre chasseur se rapproche du joueur (par le plus court chemin) si celui-ci est
  *   à moins de RAYON_CHASSE cases de couloir ; sinon le monstre se déplace au hasard.

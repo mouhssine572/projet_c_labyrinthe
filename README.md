@@ -178,6 +178,7 @@ Le projet inclut une suite de tests unitaires utilisant le framework **minunit**
 - Validation des mouvements
 - Gestion des motifs (clé, pièges qui restent, bonus consommés)
 - Ogre chasseur, fantôme, place dans le classement
+- Monstres présents selon le mode : aucun en Facile, ogre non chasseur sans fantôme en Normal, ogre chasseur et fantôme en Difficile
 
 **Test du menu** (`test_menu.c`) :
 - Noms acceptés (`Paris_2`) et refusés (vide, `../x`, `a b`, accents...)
