@@ -55,6 +55,10 @@ int nom_valide(const char *nom) {
     return 1;
 }
 
+int est_nom_labyrinthe(const char *nom_fichier) {
+    return nom_valide(nom_fichier) && strlen(nom_fichier) <= TAILLE_NOM_MAX;
+}
+
 /* Affiche l'invite et lit un nom, en redemandant tant qu'il contient des caractères interdits.
  * Empêche par exemple un nom comme "../fichier" qui ferait écrire hors du dossier labyrinthe/. */
 static void lire_nom(const char *invite, char *nom) {
@@ -193,7 +197,7 @@ int labyrinthe_disponible(void) {
         struct dirent *dir;
 
         while (!trouve && (dir = readdir(d)) != NULL) {
-            if (strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0) {
+            if (est_nom_labyrinthe(dir->d_name)) {
                 trouve = 1;
             }
         }
@@ -243,7 +247,7 @@ int charger_noms_joueurs(char noms[NBR_JOUEURS_MAX][TAILLE_NOM]) {
     if (d) {
         struct dirent *dir;
         while ((dir = readdir(d)) != NULL) {
-            if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0) continue;
+            if (!est_nom_labyrinthe(dir->d_name)) continue;
             Grille grille;
             if (!charger_labyrinthe(&grille, dir->d_name)) continue;
             for (int i = 0; i < NOMBRE_SCORE; i++) {
@@ -334,9 +338,8 @@ int get_nom_labyrinthe(char *nom_labyrinthe) {
         struct dirent *dir;
 
         while ((dir = readdir(d)) != NULL && nbr_fichiers < NBR_LABYRINTHES_MAX) {
-            // Ignorer les entrées système "." et ".." ainsi que les noms trop longs
-            if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0) continue;
-            if (strlen(dir->d_name) >= TAILLE_NOM) continue;
+            // Ignorer ".", "..", les fichiers parasites (.DS_Store, copies PARIS~...) et les noms trop longs
+            if (!est_nom_labyrinthe(dir->d_name)) continue;
             snprintf(fichiers[nbr_fichiers], TAILLE_NOM, "%s", dir->d_name);
             nbr_fichiers++;
         }

@@ -82,6 +82,15 @@ int labyrinthe_existe(const char *nom);
 int nom_valide(const char *nom);
 
 /**
+ * @brief Indique si un fichier du dossier des labyrinthes peut être un labyrinthe du jeu.
+ * * Le nom doit être valide (voir nom_valide) et tenir dans TAILLE_NOM_MAX caractères.
+ *   Écarte ".", "..", et les fichiers parasites comme ".DS_Store" ou "PARIS~".
+ * @param nom_fichier Nom du fichier (sans le dossier).
+ * @return int 1 si c'est un nom de labyrinthe possible, 0 sinon.
+ */
+int est_nom_labyrinthe(const char *nom_fichier);
+
+/**
  * @brief Liste les labyrinthes du répertoire "labyrinthe" (ordre alphabétique) dans un menu
  *        navigable avec les flèches, suivi de l'option « Revenir au menu ».
  * @param nom_labyrinthe Buffer d'au moins TAILLE_NOM octets où stocker le nom choisi.

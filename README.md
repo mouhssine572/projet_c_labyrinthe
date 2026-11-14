@@ -197,7 +197,7 @@ make memcheck   # les mêmes tests sous Valgrind
 - Une touche invalide pendant la partie ne déplace pas le joueur et ne compte pas de point
 - Fermer l'entrée (`Ctrl+D` sous Linux, `Ctrl+Z` puis Entrée sous Windows) abandonne la partie / quitte le programme
 - Chaque fichier de labyrinthe stocke la grille, le mode et le top 10 des scores ; la première ligne est `hauteur largeur mode` (1 = Facile, 2 = Difficile, 3 = Normal ; les anciens fichiers sans mode sont chargés en mode Facile)
-- Les labyrinthes sont sauvegardés dans le dossier `labyrinthe/`, créé automatiquement s'il n'existe pas
+- Les labyrinthes sont sauvegardés dans le dossier `labyrinthe/`, créé automatiquement s'il n'existe pas. Les fichiers dont le nom n'est pas un nom valide (`.DS_Store`, `PARIS~`, `PARIS.txt`...) y sont ignorés
 - Les noms des joueurs sont mémorisés dans `joueurs.txt` (le plus récent en premier). Au premier lancement, ce fichier est rempli avec les noms trouvés dans les classements des labyrinthes existants
 - Les couleurs nécessitent un terminal compatible ANSI (Windows 10+, Linux, macOS)
 
