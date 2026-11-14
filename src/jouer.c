@@ -300,7 +300,7 @@ static void afficher_informations(Grille *grille, Joueur *joueur){
     printf("\n Score : %s%d%s   Clé : %s   Mode : %s\n",
            COULEUR_GRAS, get_score_joueur(joueur), COULEUR_RESET,
            joueur->have_key ? "oui" : "non",
-           grille->mode == MODE_DIFFICILE ? "Difficile" : "Facile");
+           nom_mode(grille->mode));
 
     printf(" ");
     legende(MOTIF_JOUEUR, "vous");
@@ -308,10 +308,10 @@ static void afficher_informations(Grille *grille, Joueur *joueur){
     legende(MOTIF_SORTIE, "sortie");
     legende(MOTIF_TRAP, "piège");
     legende(MOTIF_BOOST, "bonus");
-    if (grille->mode == MODE_DIFFICILE) { // Pas de monstres en mode Facile
+    if (grille->mode != MODE_FACILE) { // Pas de monstres en mode Facile
         printf("\n ");
         legende(MOTIF_OGRE, "ogre");
-        legende(MOTIF_FANTOME, "fantôme");
+        if (grille->mode == MODE_DIFFICILE) legende(MOTIF_FANTOME, "fantôme");
     }
     printf("\n\n Déplacements : z q s d ou flèches   |   %c ou Échap : revenir au menu\n", MVT_TOUCHE_RETOUR);
 
@@ -342,23 +342,30 @@ int jouer_labyrinthe(Grille *grille, Joueur *joueur){
     Monstre fantome;
     Monstre *monstres[NBR_MONSTRES_MAX] = {&fantome, &ogre}; // L'ogre est dessiné par-dessus le fantôme
     int difficile = (grille->mode == MODE_DIFFICILE);
+    int normal = (grille->mode == MODE_NORMAL);
 
     initialiser_monstre(&ogre, MOTIF_OGRE, 0);
     initialiser_monstre(&fantome, MOTIF_FANTOME, 1);
     ogre.chasseur = difficile;
 
-    // Les monstres n'existent qu'en mode Difficile : en Facile ils restent inactifs
-    // (ni affichés, ni déplacés, ils ne peuvent pas attraper le joueur).
-    if (difficile) {
+    // Les monstres non placés restent inactifs (ni affichés, ni déplacés, ils ne peuvent pas
+    // attraper le joueur) : Facile n'a aucun monstre, Normal seulement un ogre qui erre au hasard,
+    // Difficile un ogre chasseur et le fantôme.
+    if (difficile || normal) {
         placer_monstre(grille, &ogre, joueur);
+    }
+    if (difficile) {
         placer_monstre(grille, &fantome, joueur);
     }
 
     // Le joueur est affiché dès le départ, sur l'entrée (sans compter de point)
     joueur->case_dessous = grille->cases[joueur->x][joueur->y];
     grille->cases[joueur->x][joueur->y] = MOTIF_JOUEUR;
+    const char *avertissement = difficile ? " Attention : ogre chasseur et fantôme !"
+                              : normal    ? " Attention à l'ogre !"
+                              : "";
     snprintf(joueur->message, TAILLE_MESSAGE, "Ramassez la clé (%c) puis rejoignez la sortie (%c).%s",
-             MOTIF_KEY, MOTIF_SORTIE, difficile ? " Attention : ogre chasseur et fantôme !" : "");
+             MOTIF_KEY, MOTIF_SORTIE, avertissement);
 
     while (1) {
         afficher_tour(grille, joueur, monstres);

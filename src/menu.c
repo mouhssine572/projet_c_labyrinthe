@@ -367,15 +367,17 @@ int get_nom_labyrinthe(char *nom_labyrinthe) {
 int get_mode_jeu(void) {
     const char *options[] = {
         "Facile    (pas de monstres)",
+        "Normal    (un ogre qui erre sans chasser, pièges et bonus intermédiaires)",
         "Difficile (ogre chasseur, fantôme, plus de pièges et moins de bonus)",
         "Revenir au menu"
     };
-    int choix = choisir_option("Choisissez un mode de jeu :", options, 3);
+    const int modes[] = { MODE_FACILE, MODE_NORMAL, MODE_DIFFICILE };
+    int choix = choisir_option("Choisissez un mode de jeu :", options, 4);
 
-    if (choix == 2) return CHOIX_RETOUR;
+    if (choix == 3) return CHOIX_RETOUR;
 
-    printf("Mode de jeu choisi : %s\n", choix == 0 ? "Facile" : "Difficile");
-    return choix + 1; // 1 = Facile, 2 = Difficile
+    printf("Mode de jeu choisi : %s\n", nom_mode(modes[choix]));
+    return modes[choix];
 }
 
 /* Demande une dimension impaire comprise entre DIMENSION_MIN et DIMENSION_MAX.
@@ -451,8 +453,9 @@ void afficher_regles(void) {
            MOTIF_TRAP, PENALITE_PIEGE);
     printf("   %c  Bonus : retire %d points au score (minimum 0). Il disparaît une fois pris.\n",
            MOTIF_BOOST, GAIN_BONUS);
-    printf("   %c  Ogre (mode Difficile uniquement) : ne traverse pas les murs.\n", MOTIF_OGRE);
-    printf("      Il vous chasse dès que vous êtes à moins de %d cases, sinon il erre au hasard.\n", RAYON_CHASSE);
+    printf("   %c  Ogre (modes Normal et Difficile) : ne traverse pas les murs.\n", MOTIF_OGRE);
+    printf("      En Normal, il erre au hasard. En Difficile, il vous chasse dès que vous êtes\n");
+    printf("      à moins de %d cases, sinon il erre au hasard.\n", RAYON_CHASSE);
     printf("      S'il vous attrape, la partie est perdue et votre score n'est pas enregistré.\n");
     printf("   %c  Fantôme (mode Difficile uniquement) : se déplace au hasard et traverse les murs.\n", MOTIF_FANTOME);
     printf("      S'il vous attrape, la partie continue mais votre score est doublé ;\n");
@@ -460,6 +463,7 @@ void afficher_regles(void) {
 
     printf("\n Modes de jeu (choisis à la création, enregistrés dans le labyrinthe) :\n");
     printf("   Facile    : ni ogre ni fantôme.\n");
+    printf("   Normal    : un ogre qui erre sans chasser, pas de fantôme ; pièges et bonus intermédiaires.\n");
     printf("   Difficile : ogre chasseur et fantôme, deux fois plus de pièges et deux fois moins de bonus.\n");
 
     printf("\n Score :\n");

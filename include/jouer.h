@@ -137,8 +137,9 @@ void afficher_jeu(Grille *grille, Monstre *monstres[], int nbr_monstres);
  * @brief Boucle principale du jeu : efface l'écran, affiche la carte, la légende et le score,
  * puis gère les mouvements jusqu'à la fin de la partie.
  * * Fait appel à la fonction **joueur_gagne** pour verifier que le joueur a la clé et est arrivé à la sortie.
- * * En mode Difficile seulement, l'ogre ('G', chasseur) et le fantôme ('F') sont présents
- *   et se déplacent après chaque tour. En mode Facile, il n'y a aucun monstre.
+ * * En mode Difficile, l'ogre ('G', chasseur) et le fantôme ('F') sont présents et se déplacent
+ *   après chaque tour. En mode Normal, seul l'ogre est présent et il erre au hasard sans chasser.
+ *   En mode Facile, il n'y a aucun monstre.
  * * Si l'ogre attrape le joueur, la partie est perdue ; si le fantôme l'attrape, le score est doublé.
  * @param grille Pointeur vers la Grille de jeu.
  * @param joueur Pointeur vers la structure Joueur.

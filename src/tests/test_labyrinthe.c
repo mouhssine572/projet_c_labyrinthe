@@ -221,6 +221,29 @@ MU_TEST(test_placer_motifs) {
     mu_check(compter_motif(g, '@') > compter_motif(g, '&')); // Plus de pièges que de bonus
 }
 
+MU_TEST(test_mode_normal) {
+    for (int i = 1; i < H_GRID - 1; i++) {
+        for (int j = 1; j < L_GRID - 1; j++) {
+            g->cases[i][j] = ' ';
+        }
+    }
+
+    placer_motifs(g, MODE_NORMAL);
+    mu_assert_int_eq(MODE_NORMAL, g->mode);
+    mu_assert_int_eq(1, compter_motif(g, '$'));
+
+    // Le mode Normal est conservé dans le fichier
+    sauvegarder_labyrinthe(g, TEST_LABY_FILE);
+    Grille g_relu = {0};
+    mu_assert_int_eq(1, charger_labyrinthe(&g_relu, TEST_LABY_FILE));
+    mu_assert_int_eq(MODE_NORMAL, g_relu.mode);
+    liberer_grille(&g_relu);
+
+    mu_assert_string_eq("Facile", nom_mode(MODE_FACILE));
+    mu_assert_string_eq("Normal", nom_mode(MODE_NORMAL));
+    mu_assert_string_eq("Difficile", nom_mode(MODE_DIFFICILE));
+}
+
 MU_TEST(test_drop_motif_sans_place) {
     // Grille 3x3 : une seule case libre
     Grille petite;
@@ -246,6 +269,7 @@ MU_TEST_SUITE(test_suite) {
     MU_RUN_TEST(test_allouer_grille_initialise_scores);
     MU_RUN_TEST(test_sauvegarde_puis_chargement);
     MU_RUN_TEST(test_placer_motifs);
+    MU_RUN_TEST(test_mode_normal);
     MU_RUN_TEST(test_drop_motif_sans_place);
 }
 

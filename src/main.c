@@ -45,8 +45,7 @@ static void option_creer(void) {
 
     sauvegarder_labyrinthe(&grille, nom_labyrinthe);
     afficher_labyrinthe(&grille);
-    printf("\nLabyrinthe \"%s\" créé en mode %s.\n",
-           nom_labyrinthe, mode_jeu == MODE_DIFFICILE ? "Difficile" : "Facile");
+    printf("\nLabyrinthe \"%s\" créé en mode %s.\n", nom_labyrinthe, nom_mode(mode_jeu));
 
     liberer_grille(&grille);
     liberer_cellules(&cellules);
@@ -62,25 +61,23 @@ static void option_charger(void) {
     if (!charger_labyrinthe(&grille, nom_labyrinthe)) return;
 
     afficher_labyrinthe(&grille);
-    printf("\nMode %s.\n", grille.mode == MODE_DIFFICILE ? "Difficile" : "Facile");
+    printf("\nMode %s.\n", nom_mode(grille.mode));
     liberer_grille(&grille);
 }
 
-static void option_jouer(void) {
-    char nom_joueur[TAILLE_NOM];
-    char nom_labyrinthe[TAILLE_NOM];
+/* Joue une partie sur le labyrinthe donné et enregistre le score en cas de victoire.
+ * Renvoie 0 si le labyrinthe n'a pas pu être chargé, 1 sinon. */
+static int jouer_une_partie(const char *nom_joueur, char *nom_labyrinthe) {
     Grille grille;
     Joueur joueur;
 
-    if (!verifier_labyrinthe_disponible()) return;
-    if (!get_nom_joueur(nom_joueur)) return;
-    if (!get_nom_labyrinthe(nom_labyrinthe)) return;
-    if (!charger_labyrinthe(&grille, nom_labyrinthe)) return;
+    // Rechargé à chaque partie : la précédente a modifié la grille (bonus pris, trace du joueur)
+    if (!charger_labyrinthe(&grille, nom_labyrinthe)) return 0;
 
     initialiser_joueur(&joueur);
 
     if (jouer_labyrinthe(&grille, &joueur)) {
-        int place = set_score_joueur(&grille, &joueur, nom_joueur);
+        int place = set_score_joueur(&grille, &joueur, (char *) nom_joueur);
         if (place > 0) {
             sauvegarder_score(&grille, nom_labyrinthe);
             printf("\nVous êtes %d%s sur ce labyrinthe !\n", place, place == 1 ? "er" : "e");
@@ -90,6 +87,31 @@ static void option_jouer(void) {
     }
 
     liberer_grille(&grille);
+    return 1;
+}
+
+/* Propose de rejouer à la fin d'une partie. Renvoie 1 pour rejouer, 0 pour revenir au menu. */
+static int proposer_rejouer(const char *nom_labyrinthe) {
+    char titre[TAILLE_NOM + 32];
+    const char *options[] = {
+        "Rejouer le même labyrinthe",
+        "Revenir au menu"
+    };
+    snprintf(titre, sizeof titre, "Partie terminée sur \"%s\".", nom_labyrinthe);
+    return choisir_option(titre, options, 2) == 0;
+}
+
+static void option_jouer(void) {
+    char nom_joueur[TAILLE_NOM];
+    char nom_labyrinthe[TAILLE_NOM];
+
+    if (!verifier_labyrinthe_disponible()) return;
+    if (!get_nom_joueur(nom_joueur)) return;
+    if (!get_nom_labyrinthe(nom_labyrinthe)) return;
+
+    while (jouer_une_partie(nom_joueur, nom_labyrinthe) && proposer_rejouer(nom_labyrinthe)) {
+        // On rejoue avec le même joueur sur le même labyrinthe
+    }
 }
 
 static void option_scores(void) {

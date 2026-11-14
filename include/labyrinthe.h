@@ -28,9 +28,11 @@
 #define MOTIF_OGRE 'G'
 #define MOTIF_FANTOME 'F'
 
-/* Modes de jeu (enregistrés dans le fichier du labyrinthe). */
+/* Modes de jeu (enregistrés dans le fichier du labyrinthe).
+ * Les valeurs 1 et 2 sont celles des anciens fichiers : on ne les change pas. */
 #define MODE_FACILE 1
 #define MODE_DIFFICILE 2
+#define MODE_NORMAL 3
 
 typedef struct {
     int **cellule_matrix;
@@ -47,7 +49,7 @@ typedef struct {
     char **cases;
     int hauteur;
     int largeur;
-    int mode;      /* MODE_FACILE ou MODE_DIFFICILE */
+    int mode;      /* MODE_FACILE, MODE_NORMAL ou MODE_DIFFICILE */
     Top_Player top_scores[NOMBRE_SCORE];
 } Grille;
 
@@ -176,11 +178,18 @@ int compter_motif(Grille *grille, char motif);
 
 /**
  * @brief Place la clé (une seule), les pièges et les bonus dans un labyrinthe construit.
- * * Le mode Difficile place plus de pièges et moins de bonus.
+ * * Plus le mode est difficile, plus il y a de pièges et moins il y a de bonus.
  * @param grille Pointeur vers la Grille (son mode est mis à jour).
- * @param mode MODE_FACILE ou MODE_DIFFICILE.
+ * @param mode MODE_FACILE, MODE_NORMAL ou MODE_DIFFICILE (un mode inconnu vaut Facile).
  */
 void placer_motifs(Grille *grille, int mode);
+
+/**
+ * @brief Renvoie le nom affichable d'un mode de jeu.
+ * @param mode MODE_FACILE, MODE_NORMAL ou MODE_DIFFICILE.
+ * @return const char* "Facile", "Normal" ou "Difficile".
+ */
+const char *nom_mode(int mode);
 
 /**
  * @brief Affiche la liste des meilleurs scores enregistrés pour le labyrinthe chargé.

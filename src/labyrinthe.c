@@ -261,7 +261,7 @@ int charger_labyrinthe(Grille *grille, char *nom_labyrinthe){
         fclose(fichier);
         return 0;
     }
-    if (mode != MODE_DIFFICILE) {
+    if (mode != MODE_DIFFICILE && mode != MODE_NORMAL) {
         mode = MODE_FACILE;
     }
 
@@ -350,20 +350,34 @@ int drop_motif(Grille *grille, char motif){
 
 void placer_motifs(Grille *grille, int mode){
     int surface = grille->hauteur * grille->largeur;
-    int difficile = (mode == MODE_DIFFICILE);
+    int pieges_pour_mille, bonus_pour_mille;
 
-    grille->mode = difficile ? MODE_DIFFICILE : MODE_FACILE;
+    // Proportions de la surface : Difficile a deux fois plus de pièges et deux fois moins
+    // de bonus que Facile ; Normal est entre les deux.
+    switch (mode) {
+        case MODE_DIFFICILE: pieges_pour_mille = 40; bonus_pour_mille = 10; break;
+        case MODE_NORMAL:    pieges_pour_mille = 30; bonus_pour_mille = 15; break;
+        default:             mode = MODE_FACILE;
+                             pieges_pour_mille = 20; bonus_pour_mille = 20; break;
+    }
+    grille->mode = mode;
 
     // La clé en premier pour qu'elle ait toujours une place
     drop_motif(grille, MOTIF_KEY);
 
-    // Difficile : deux fois plus de pièges, deux fois moins de bonus
-    // Pourcentages de la surface (4 % / 2 % de pièges, 1 % / 2 % de bonus), calculés en entiers
-    int nbr_pieges = surface * (difficile ? 4 : 2) / 100;
-    int nbr_bonus  = surface * (difficile ? 1 : 2) / 100;
+    int nbr_pieges = surface * pieges_pour_mille / 1000;
+    int nbr_bonus  = surface * bonus_pour_mille / 1000;
 
     for (int k = 0; k < nbr_pieges; k++) drop_motif(grille, MOTIF_TRAP);
     for (int k = 0; k < nbr_bonus; k++)  drop_motif(grille, MOTIF_BOOST);
+}
+
+const char *nom_mode(int mode){
+    switch (mode) {
+        case MODE_DIFFICILE: return "Difficile";
+        case MODE_NORMAL:    return "Normal";
+        default:             return "Facile";
+    }
 }
 
 void consulter_score_labyrinthe(Grille *grille, char *nom_labyrinthe){

@@ -116,7 +116,7 @@ int get_nom_joueur(char *nom_joueur);
 
 /**
  * @brief Demande à l'utilisateur de choisir un mode de jeu (menu navigable avec les flèches).
- * @return int Le mode de jeu choisi (1 pour Facile, 2 pour Difficile), CHOIX_RETOUR pour revenir au menu.
+ * @return int Le mode choisi (MODE_FACILE, MODE_NORMAL ou MODE_DIFFICILE), CHOIX_RETOUR pour revenir au menu.
  */
 int get_mode_jeu(void);
 
