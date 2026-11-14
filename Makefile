@@ -38,22 +38,26 @@ MAIN_OBJS = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(MAIN_SRCS))
 # Fichiers sources et objets des tests
 TEST_JOUER_SRC     = $(TEST_DIR)/test_jouer.c
 TEST_LABY_SRC      = $(TEST_DIR)/test_labyrinthe.c
+TEST_MENU_SRC      = $(TEST_DIR)/test_menu.c
 
 # Le test du joueur dépend de jouer.o, labyrinthe.o et terminal.o
 TEST_JOUER_OBJS    = $(BUILD_DIR)/test_jouer.o $(BUILD_DIR)/jouer.o $(BUILD_DIR)/labyrinthe.o $(BUILD_DIR)/terminal.o
 # Le test du labyrinthe dépend de labyrinthe.o et terminal.o (affichage en couleur)
 TEST_LABY_OBJS     = $(BUILD_DIR)/test_labyrinthe.o $(BUILD_DIR)/labyrinthe.o $(BUILD_DIR)/terminal.o
+# Le test du menu dépend de menu.o et de ce qu'il utilise (labyrinthe, jouer, terminal)
+TEST_MENU_OBJS     = $(BUILD_DIR)/test_menu.o $(BUILD_DIR)/menu.o $(BUILD_DIR)/jouer.o $(BUILD_DIR)/labyrinthe.o $(BUILD_DIR)/terminal.o
 
 # Exécutables
 EXEC      = $(BIN_DIR)/main
 TEST_JOUER_EXEC = $(BIN_DIR)/test_jouer
 TEST_LABY_EXEC  = $(BIN_DIR)/test_labyrinthe
-ALL_TEST_EXECS  = $(TEST_LABY_EXEC) $(TEST_JOUER_EXEC)
+TEST_MENU_EXEC  = $(BIN_DIR)/test_menu
+ALL_TEST_EXECS  = $(TEST_LABY_EXEC) $(TEST_JOUER_EXEC) $(TEST_MENU_EXEC)
 
 # Fichiers de dépendances générés par -MMD
 DEPS = $(MAIN_OBJS:.o=.d) \
        $(BUILD_DIR)/test_jouer.d \
-       $(BUILD_DIR)/test_labyrinthe.d
+       $(BUILD_DIR)/test_labyrinthe.d \n       $(BUILD_DIR)/test_menu.d
 
 # Cibles phony et cible par défaut
 .PHONY: all test clean distclean dirs
@@ -67,6 +71,8 @@ test: dirs $(ALL_TEST_EXECS)
 	./$(TEST_LABY_EXEC)
 	@echo "--- Exécution des tests du joueur ---"
 	./$(TEST_JOUER_EXEC)
+	@echo "--- Exécution des tests du menu ---"
+	./$(TEST_MENU_EXEC)
 	@$(RM) temp_input.txt # Nettoie le fichier temporaire de test_jouer.c
 
 # -------------------------- Règles de construction ----------------------------
@@ -94,12 +100,21 @@ $(BUILD_DIR)/test_labyrinthe.o: $(TEST_DIR)/test_labyrinthe.c
 	@$(MKDIR_P) $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
+# Règle spécifique pour la compilation de test_menu.o
+$(BUILD_DIR)/test_menu.o: $(TEST_DIR)/test_menu.c
+	@$(MKDIR_P) $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+
 # Règle pour l'exécutable de test du joueur
 $(TEST_JOUER_EXEC): $(TEST_JOUER_OBJS)
 	$(CC) $^ -o $@
 
 # Règle pour l'exécutable de test du labyrinthe
 $(TEST_LABY_EXEC): $(TEST_LABY_OBJS)
+	$(CC) $^ -o $@
+
+# Règle pour l'exécutable de test du menu
+$(TEST_MENU_EXEC): $(TEST_MENU_OBJS)
 	$(CC) $^ -o $@
 
 # ----------------------------- Règles de nettoyage ----------------------------

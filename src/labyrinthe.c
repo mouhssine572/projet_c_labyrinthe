@@ -206,11 +206,15 @@ int labyrinthe_complet(Cellule *cellules, Grille *grille){
     return 1;
 }
 
+void chemin_labyrinthe(const char *nom, char *chemin){
+    snprintf(chemin, TAILLE_CHEMIN, DOSSIER_LABYRINTHES "/%s", nom);
+}
+
 void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe){
 
-    CREATE_DIR("labyrinthe");
-    char chemin_complet[100];
-    snprintf(chemin_complet, 100, "labyrinthe/%s", nom_labyrinthe);
+    CREATE_DIR(DOSSIER_LABYRINTHES);
+    char chemin_complet[TAILLE_CHEMIN];
+    chemin_labyrinthe(nom_labyrinthe, chemin_complet);
     FILE *f = fopen(chemin_complet, "w");
     if (!f) {
         perror("Erreur ouverture fichier de sauvegarde");
@@ -239,8 +243,8 @@ void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe){
 
 int charger_labyrinthe(Grille *grille, char *nom_labyrinthe){
 
-    char chemin_complet[100];
-    snprintf(chemin_complet, 100, "labyrinthe/%s", nom_labyrinthe);
+    char chemin_complet[TAILLE_CHEMIN];
+    chemin_labyrinthe(nom_labyrinthe, chemin_complet);
     FILE *fichier = fopen(chemin_complet, "r");
     if (fichier == NULL) {
         perror("Erreur lors de l'ouverture du fichier");

@@ -142,7 +142,7 @@ int get_action_initial(void){
 }
 
 int labyrinthe_disponible(void) {
-    DIR *d = opendir("labyrinthe");
+    DIR *d = opendir(DOSSIER_LABYRINTHES);
     int trouve = 0;
 
     if (d) {
@@ -160,8 +160,8 @@ int labyrinthe_disponible(void) {
 }
 
 int labyrinthe_existe(const char *nom) {
-    char chemin[TAILLE_NOM + 16];
-    snprintf(chemin, sizeof chemin, "labyrinthe/%s", nom);
+    char chemin[TAILLE_CHEMIN];
+    chemin_labyrinthe(nom, chemin);
 
     FILE *f = fopen(chemin, "r");
     if (f == NULL) return 0;
@@ -193,7 +193,7 @@ int charger_noms_joueurs(char noms[NBR_JOUEURS_MAX][TAILLE_NOM]) {
     }
 
     // 2) Les joueurs présents dans les classements des labyrinthes (anciennes sessions)
-    DIR *d = opendir("labyrinthe");
+    DIR *d = opendir(DOSSIER_LABYRINTHES);
     if (d) {
         struct dirent *dir;
         while ((dir = readdir(d)) != NULL) {
@@ -273,7 +273,7 @@ int get_nom_labyrinthe(char *nom_labyrinthe) {
     char fichiers[NBR_LABYRINTHES_MAX][TAILLE_NOM];
     int nbr_fichiers = 0;
 
-    DIR *d = opendir("labyrinthe");
+    DIR *d = opendir(DOSSIER_LABYRINTHES);
     if (d) {
         struct dirent *dir;
 

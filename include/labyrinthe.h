@@ -11,6 +11,11 @@
 
 #define NOMBRE_SCORE 10
 
+/* Dossier où sont rangés les fichiers de labyrinthe. */
+#define DOSSIER_LABYRINTHES "labyrinthe"
+/* Taille des buffers de chemin ("labyrinthe/<nom>"), '\0' compris. */
+#define TAILLE_CHEMIN 128
+
 /* Caractères du labyrinthe. */
 #define MOTIF_MUR '#'
 #define MOTIF_VIDE ' '
@@ -125,6 +130,13 @@ void construire_labyrinthe(Cellule *cellules, Grille *grille);
  * @return int 1 si le labyrinthe est complet (toutes les cellules ont le même groupe), 0 sinon.
  */
 int labyrinthe_complet(Cellule *cellules, Grille *grille);
+
+/**
+ * @brief Construit le chemin du fichier d'un labyrinthe : DOSSIER_LABYRINTHES "/" nom.
+ * @param nom Nom du labyrinthe.
+ * @param chemin Buffer d'au moins TAILLE_CHEMIN octets qui reçoit le chemin.
+ */
+void chemin_labyrinthe(const char *nom, char *chemin);
 
 /**
  * @brief Sauvegarde la grille du labyrinthe et les scores associés dans un fichier.

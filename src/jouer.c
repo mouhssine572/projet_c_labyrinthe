@@ -456,33 +456,14 @@ void sauvegarder_score(Grille *grille_de_jeu, char *nom_labyrinthe) {
         return;
     }
 
-    CREATE_DIR("labyrinthe");
-    char chemin_complet[100];
-    snprintf(chemin_complet, 100, "labyrinthe/%s", nom_labyrinthe);
-    FILE *f = fopen(chemin_complet, "w");
-    if (!f) {
-        perror("Erreur ouverture fichier de sauvegarde");
-        liberer_grille(&grille_sauvegarde);
-        return;
-    }
+    // On prête temporairement le classement de la partie à la grille d'origine,
+    // puis on remet ses propres scores pour que liberer_grille ne libère que les siens.
+    Top_Player scores_origine[NOMBRE_SCORE];
+    memcpy(scores_origine, grille_sauvegarde.top_scores, sizeof scores_origine);
+    memcpy(grille_sauvegarde.top_scores, grille_de_jeu->top_scores, sizeof scores_origine);
 
-    fprintf(f, "%d %d %d\n", grille_sauvegarde.hauteur, grille_sauvegarde.largeur, grille_sauvegarde.mode);
+    sauvegarder_labyrinthe(&grille_sauvegarde, nom_labyrinthe);
 
-    for (int i = 0; i < grille_sauvegarde.hauteur; i++) {
-        for (int j = 0; j < grille_sauvegarde.largeur; j++) {
-            fputc(grille_sauvegarde.cases[i][j], f);
-        }
-        fputc('\n', f);
-    }
-
-    for (int i = 0; i < NOMBRE_SCORE; i++) {
-        char *name = grille_de_jeu->top_scores[i].name;
-        int score = grille_de_jeu->top_scores[i].score;
-        if (score > 0 && name != NULL && *name != '\0') {
-            fprintf(f, "%d %s\n", score, name);
-        }
-    }
-
-    fclose(f);
+    memcpy(grille_sauvegarde.top_scores, scores_origine, sizeof scores_origine);
     liberer_grille(&grille_sauvegarde);
 }
