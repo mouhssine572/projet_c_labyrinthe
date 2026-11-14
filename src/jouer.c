@@ -434,8 +434,9 @@ int set_score_joueur(Grille *grille, Joueur *joueur, char *nom_joueur) {
     int index_insertion = -1;
 
     for (int i = 0; i < NOMBRE_SCORE; i++) {
-        int score_actuel = grille->top_scores[i].score;
-        if (score_actuel == 0 || score_joueur < score_actuel) {
+        // Une place est libre quand elle n'a pas de nom (un score de 0 est un vrai score, le meilleur)
+        int place_libre = (grille->top_scores[i].name == NULL);
+        if (place_libre || score_joueur < grille->top_scores[i].score) {
             index_insertion = i;
             break;
         }

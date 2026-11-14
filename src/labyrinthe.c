@@ -210,6 +210,12 @@ void chemin_labyrinthe(const char *nom, char *chemin){
     snprintf(chemin, TAILLE_CHEMIN, DOSSIER_LABYRINTHES "/%s", nom);
 }
 
+int supprimer_labyrinthe(const char *nom){
+    char chemin[TAILLE_CHEMIN];
+    chemin_labyrinthe(nom, chemin);
+    return remove(chemin) == 0;
+}
+
 void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe){
 
     CREATE_DIR(DOSSIER_LABYRINTHES);
@@ -233,7 +239,7 @@ void sauvegarder_labyrinthe(Grille *grille, char *nom_labyrinthe){
     for (int i = 0; i < NOMBRE_SCORE; i++) {
         char *name = grille->top_scores[i].name;
         int score = grille->top_scores[i].score;
-        if (score > 0 && name != NULL && *name != '\0') {
+        if (score >= 0 && name != NULL && *name != '\0') { // 0 est un score valide
             fprintf(f, "%d %s\n", score, name);
         }
     }
@@ -385,7 +391,7 @@ void consulter_score_labyrinthe(Grille *grille, char *nom_labyrinthe){
     printf("\nLe Top 10 des scores du labyrinthe %s est:\n", nom_labyrinthe);
     int scores_affiches = 0;
     for(int i = 0; i < NOMBRE_SCORE; i++){
-        if (grille->top_scores[i].name == NULL || grille->top_scores[i].score <= 0) {
+        if (grille->top_scores[i].name == NULL || grille->top_scores[i].score < 0) {
             continue;
         }
         printf("Score %d : %d  Joueur : %s \n", i+1, grille->top_scores[i].score, grille->top_scores[i].name);

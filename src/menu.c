@@ -182,11 +182,12 @@ int get_action_initial(void){
         "Jouer",
         "Consulter les scores d'un labyrinthe",
         "Consulter les règles du jeu",
+        "Supprimer un labyrinthe",
         "Quitter"
     };
 
     // Échap désactivé ici : une fausse manipulation ne doit pas quitter le jeu
-    return choisir_option_echap("Choisissez une action parmi ce qui suit :", options, 6, 0) + 1;
+    return choisir_option_echap("Choisissez une action parmi ce qui suit :", options, 7, 0) + 1;
 }
 
 int labyrinthe_disponible(void) {

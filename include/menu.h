@@ -56,7 +56,7 @@ int choisir_option(const char *titre, const char *options[], int nbr_options);
 /**
  * @brief Affiche le menu principal et récupère le choix initial de l'utilisateur.
  * * Navigation avec les flèches (voir choisir_option).
- * @return int Le numéro de l'action choisie (1 à 6).
+ * @return int Le numéro de l'action choisie (1 à 7).
  */
 int get_action_initial(void);
 

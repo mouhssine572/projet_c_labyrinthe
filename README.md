@@ -40,7 +40,8 @@ Le mode est choisi à la création et enregistré dans le fichier du labyrinthe.
 - Top 10 des meilleurs scores enregistrés par labyrinthe
 - Persistant : les scores sont sauvegardés dans les fichiers de labyrinthe
 - Affichage du top des scores
-- À la fin d'une partie gagnée, la place obtenue est affichée (« Vous êtes 3e sur ce labyrinthe ! »)
+- À la fin d'une partie gagnée, la place obtenue est affichée (« Vous êtes 3e sur ce labyrinthe ! ») ; si le record est battu, le jeu l'annonce avec l'ancien record (« Nouveau record ! Ancien : 37 par goat »)
+- Un score de 0 (possible grâce aux bonus) est le meilleur score possible et il est bien classé
 
 ## 🧭 Navigation dans les menus
 
@@ -127,14 +128,15 @@ BUILD=debug make
 
 ## 🎯 Menu Principal
 
-Au lancement du programme, vous avez 6 options :
+Au lancement du programme, vous avez 7 options :
 
 1. **Créer un labyrinthe** : Choisissez le mode, les dimensions et le nom d'un nouveau labyrinthe
 2. **Charger un labyrinthe** : Chargez un labyrinthe existant pour le visualiser
 3. **Jouer** : Jouez dans un labyrinthe existant
 4. **Consulter les scores** : Affichez le top 10 d'un labyrinthe
 5. **Consulter les règles du jeu** : Affiche le but du jeu, les modes et la signification de chaque caractère (`#`, `o`, `-`, `*`, `$`, `@`, `&`, `G`, `F`)
-6. **Quitter** : Quittez le programme
+6. **Supprimer un labyrinthe** : Supprime un labyrinthe et son top 10, après confirmation
+7. **Quitter** : Quittez le programme
 
 ## 🎮 Comment Jouer
 
@@ -170,14 +172,15 @@ Le projet inclut une suite de tests unitaires utilisant le framework **minunit**
 - Initialisation de la grille et des cellules
 - Création de chemins et fusion de cellules
 - Vérification de l'état complet du labyrinthe
-- Sauvegarde et chargement de labyrinthe (avec le mode)
+- Sauvegarde et chargement de labyrinthe (avec le mode et un score de 0)
+- Suppression d'un labyrinthe
 - Placement des motifs selon le mode (Facile, Normal, Difficile)
 
 **Test du joueur** (`test_jouer.c`) :
 - Positionnement du joueur
 - Validation des mouvements
 - Gestion des motifs (clé, pièges qui restent, bonus consommés)
-- Ogre chasseur, fantôme, place dans le classement
+- Ogre chasseur, fantôme, place dans le classement (y compris un score de 0)
 - Monstres présents selon le mode : aucun en Facile, ogre non chasseur sans fantôme en Normal, ogre chasseur et fantôme en Difficile
 
 **Test du menu** (`test_menu.c`) :

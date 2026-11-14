@@ -141,6 +141,13 @@ int labyrinthe_complet(Cellule *cellules, Grille *grille);
 void chemin_labyrinthe(const char *nom, char *chemin);
 
 /**
+ * @brief Supprime le fichier d'un labyrinthe (et donc son top 10).
+ * @param nom Nom du labyrinthe.
+ * @return int 1 si le fichier a été supprimé, 0 sinon (absent ou erreur).
+ */
+int supprimer_labyrinthe(const char *nom);
+
+/**
  * @brief Sauvegarde la grille du labyrinthe et les scores associés dans un fichier.
  * * Le format de sauvegarde inclut d'abord les dimensions et le mode, puis la grille de caractères,
  * et enfin la liste des meilleurs scores (score et nom du joueur).

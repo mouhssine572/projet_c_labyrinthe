@@ -11,7 +11,8 @@
 #define ACTION_JOUER    3
 #define ACTION_SCORES   4
 #define ACTION_REGLES   5
-#define ACTION_QUITTER  6
+#define ACTION_SUPPRIMER 6
+#define ACTION_QUITTER  7
 
 /* Indique si au moins un labyrinthe existe ; sinon affiche un message explicatif. */
 static int verifier_labyrinthe_disponible(void) {
@@ -77,9 +78,23 @@ static int jouer_une_partie(const char *nom_joueur, char *nom_labyrinthe) {
     initialiser_joueur(&joueur);
 
     if (jouer_labyrinthe(&grille, &joueur)) {
+        // On garde l'ancien record avant que le classement ne soit modifié
+        int ancien_record_existe = (grille.top_scores[0].name != NULL);
+        int ancien_record_score = grille.top_scores[0].score;
+        char ancien_record_nom[TAILLE_NOM] = "";
+        if (ancien_record_existe) {
+            snprintf(ancien_record_nom, sizeof ancien_record_nom, "%s", grille.top_scores[0].name);
+        }
+
         int place = set_score_joueur(&grille, &joueur, (char *) nom_joueur);
         if (place > 0) {
             sauvegarder_score(&grille, nom_labyrinthe);
+            if (place == 1 && ancien_record_existe) {
+                printf("\n%sNouveau record !%s Ancien : %d par %s\n",
+                       COULEUR_JAUNE, COULEUR_RESET, ancien_record_score, ancien_record_nom);
+            } else if (place == 1) {
+                printf("\n%sPremier record de ce labyrinthe !%s\n", COULEUR_JAUNE, COULEUR_RESET);
+            }
             printf("\nVous êtes %d%s sur ce labyrinthe !\n", place, place == 1 ? "er" : "e");
         } else {
             printf("\nVotre score n'entre pas dans le top %d de ce labyrinthe.\n", NOMBRE_SCORE);
@@ -126,6 +141,32 @@ static void option_scores(void) {
     liberer_grille(&grille);
 }
 
+static void option_supprimer(void) {
+    char nom_labyrinthe[TAILLE_NOM];
+    char titre[TAILLE_NOM + 64];
+    const char *options[] = {
+        "Oui, le supprimer (son top 10 sera perdu)",
+        "Non, revenir au menu"
+    };
+
+    if (!verifier_labyrinthe_disponible()) return;
+    printf("Vous voulez supprimer un labyrinthe\n");
+    if (!get_nom_labyrinthe(nom_labyrinthe)) return;
+
+    // Confirmation avant de supprimer, comme pour l'écrasement d'un labyrinthe existant
+    snprintf(titre, sizeof titre, "Supprimer définitivement le labyrinthe \"%s\" ?", nom_labyrinthe);
+    if (choisir_option(titre, options, 2) != 0) {
+        printf("Suppression annulée.\n");
+        return;
+    }
+
+    if (supprimer_labyrinthe(nom_labyrinthe)) {
+        printf("Labyrinthe \"%s\" supprimé.\n", nom_labyrinthe);
+    } else {
+        perror("Impossible de supprimer le labyrinthe");
+    }
+}
+
 int main(void){
     int choix;
 
@@ -141,6 +182,7 @@ int main(void){
             case ACTION_JOUER:   option_jouer();   break;
             case ACTION_SCORES:  option_scores();  break;
             case ACTION_REGLES:  afficher_regles(); break;
+            case ACTION_SUPPRIMER: option_supprimer(); break;
             case ACTION_QUITTER: printf("Vous quittez le jeu\n"); break;
         }
     } while (choix != ACTION_QUITTER);

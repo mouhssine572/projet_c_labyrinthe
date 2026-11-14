@@ -281,6 +281,31 @@ MU_TEST(test_set_score_joueur) {
     }
 }
 
+MU_TEST(test_score_zero_classe) {
+
+    for (int i = 0; i < NOMBRE_SCORE; i++) {
+        g->top_scores[i].name = NULL;
+        g->top_scores[i].score = 0;
+    }
+
+    j->score = 5;
+    mu_assert_int_eq(1, set_score_joueur(g, j, "Bob"));
+    j->score = 0;
+    mu_assert_int_eq(1, set_score_joueur(g, j, "Zero")); // 0 est le meilleur score : 1er
+    j->score = 3;
+    mu_assert_int_eq(2, set_score_joueur(g, j, "Carl")); // Passe derrière le 0, pas devant
+
+    mu_assert_int_eq(0, g->top_scores[0].score);
+    mu_assert_string_eq("Zero", g->top_scores[0].name);
+    mu_assert_string_eq("Carl", g->top_scores[1].name);
+    mu_assert_string_eq("Bob", g->top_scores[2].name);
+
+    for (int i = 0; i < NOMBRE_SCORE; i++) {
+        free(g->top_scores[i].name);
+        g->top_scores[i].name = NULL;
+    }
+}
+
 MU_TEST(test_piege_reste_bonus_disparait) {
     // Joueur en (1,1), piège en (1,2) : il y passe puis repart, le piège reste
     j->x = 1;
@@ -385,6 +410,7 @@ MU_TEST_SUITE(test_suite) {
     MU_RUN_TEST(test_deplacer_fantome);
     MU_RUN_TEST(test_fantome_double_score);
     MU_RUN_TEST(test_placer_monstre);
+    MU_RUN_TEST(test_score_zero_classe);
     MU_RUN_TEST(test_monstres_mode_facile);
     MU_RUN_TEST(test_monstres_mode_normal);
     MU_RUN_TEST(test_monstres_mode_difficile);

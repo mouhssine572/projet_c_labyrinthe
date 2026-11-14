@@ -221,6 +221,31 @@ MU_TEST(test_placer_motifs) {
     mu_check(compter_motif(g, '@') > compter_motif(g, '&')); // Plus de pièges que de bonus
 }
 
+MU_TEST(test_score_zero_sauvegarde) {
+    g->top_scores[0].name = strdup("Zero");
+    g->top_scores[0].score = 0;
+
+    sauvegarder_labyrinthe(g, TEST_LABY_FILE);
+
+    Grille g_relu = {0};
+    mu_assert_int_eq(1, charger_labyrinthe(&g_relu, TEST_LABY_FILE));
+    mu_check(g_relu.top_scores[0].name != NULL);      // Le score de 0 n'a pas été perdu
+    mu_assert_string_eq("Zero", g_relu.top_scores[0].name);
+    mu_assert_int_eq(0, g_relu.top_scores[0].score);
+    liberer_grille(&g_relu);
+}
+
+MU_TEST(test_supprimer_labyrinthe) {
+    sauvegarder_labyrinthe(g, TEST_LABY_FILE);
+
+    mu_assert_int_eq(1, supprimer_labyrinthe(TEST_LABY_FILE));
+    FILE *f = fopen("labyrinthe/" TEST_LABY_FILE, "r");
+    mu_check(f == NULL);                                       // Le fichier a disparu
+    if (f) fclose(f);
+
+    mu_assert_int_eq(0, supprimer_labyrinthe(TEST_LABY_FILE)); // Déjà supprimé : échec signalé
+}
+
 MU_TEST(test_mode_normal) {
     for (int i = 1; i < H_GRID - 1; i++) {
         for (int j = 1; j < L_GRID - 1; j++) {
@@ -270,6 +295,8 @@ MU_TEST_SUITE(test_suite) {
     MU_RUN_TEST(test_sauvegarde_puis_chargement);
     MU_RUN_TEST(test_placer_motifs);
     MU_RUN_TEST(test_mode_normal);
+    MU_RUN_TEST(test_score_zero_sauvegarde);
+    MU_RUN_TEST(test_supprimer_labyrinthe);
     MU_RUN_TEST(test_drop_motif_sans_place);
 }
 
