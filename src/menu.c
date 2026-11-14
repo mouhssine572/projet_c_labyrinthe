@@ -66,9 +66,25 @@ static void lire_nom(const char *invite, char *nom) {
     }
 }
 
-/* Affiche les lignes du menu, l'option sélectionnée étant mise en évidence. */
-static void afficher_options(const char *options[], int nbr_options, int selection) {
-    for (int i = 0; i < nbr_options; i++) {
+/* Nombre de lignes occupées par les options (fenêtre + indicateurs de défilement éventuels). */
+static int lignes_options(int nbr_options) {
+    return (nbr_options <= TAILLE_FENETRE_MENU) ? nbr_options : TAILLE_FENETRE_MENU + 2;
+}
+
+/* Affiche les lignes du menu, l'option sélectionnée étant mise en évidence.
+ * Si les options sont trop nombreuses, seules TAILLE_FENETRE_MENU d'entre elles sont affichées,
+ * à partir de l'indice debut, encadrées par le nombre d'options cachées au-dessus et en dessous. */
+static void afficher_options(const char *options[], int nbr_options, int selection, int debut,
+                             const char *aide) {
+    int defile = nbr_options > TAILLE_FENETRE_MENU;
+    int fin = defile ? debut + TAILLE_FENETRE_MENU : nbr_options;
+
+    if (defile) {
+        printf("\r\033[2K");
+        if (debut > 0) printf(COULEUR_SOMBRE "      ... %d de plus au-dessus" COULEUR_RESET, debut);
+        printf("\n");
+    }
+    for (int i = debut; i < fin; i++) {
         printf("\r\033[2K"); // Efface la ligne avant de la réécrire
         if (i == selection) {
             printf("  " COULEUR_JAUNE "> %d - %s" COULEUR_RESET "\n", i + 1, options[i]);
@@ -76,17 +92,35 @@ static void afficher_options(const char *options[], int nbr_options, int selecti
             printf("    %d - %s\n", i + 1, options[i]);
         }
     }
-    printf("\r\033[2K   (flèches haut/bas puis Entrée, ou tapez le numéro)\n");
+    if (defile) {
+        printf("\r\033[2K");
+        if (fin < nbr_options) printf(COULEUR_SOMBRE "      ... %d de plus en dessous" COULEUR_RESET, nbr_options - fin);
+        printf("\n");
+    }
+    printf("\r\033[2K   %s\n", aide);
 }
 
 /* Remonte le curseur au début du menu et le redessine sur place. */
-static void redessiner_options(const char *options[], int nbr_options, int selection) {
-    printf("\033[%dA", nbr_options + 1);
-    afficher_options(options, nbr_options, selection);
+static void redessiner_options(const char *options[], int nbr_options, int selection, int debut,
+                               const char *aide) {
+    printf("\033[%dA", lignes_options(nbr_options) + 1);
+    afficher_options(options, nbr_options, selection, debut, aide);
 }
 
-int choisir_option(const char *titre, const char *options[], int nbr_options) {
+/* Décale la fenêtre visible pour que l'option sélectionnée y soit. Renvoie le nouveau début. */
+static int ajuster_fenetre(int selection, int debut) {
+    if (selection < debut) return selection;
+    if (selection >= debut + TAILLE_FENETRE_MENU) return selection - TAILLE_FENETRE_MENU + 1;
+    return debut;
+}
+
+/* Menu aux flèches. Si echap_autorise, Échap choisit la dernière option (« Revenir au menu »). */
+static int choisir_option_echap(const char *titre, const char *options[], int nbr_options, int echap_autorise) {
     int selection = 0;
+    int debut = 0; // Première option visible dans la fenêtre
+    const char *aide = echap_autorise
+        ? "(flèches haut/bas puis Entrée, ou tapez le numéro ; Échap pour revenir)"
+        : "(flèches haut/bas puis Entrée, ou tapez le numéro)";
 
     printf("\n %s\n\n", titre);
 
@@ -103,7 +137,7 @@ int choisir_option(const char *titre, const char *options[], int nbr_options) {
         return choix - 1;
     }
 
-    afficher_options(options, nbr_options, selection);
+    afficher_options(options, nbr_options, selection, debut, aide);
 
     while (1) {
         int touche = lire_touche();
@@ -113,19 +147,28 @@ int choisir_option(const char *titre, const char *options[], int nbr_options) {
             exit(EXIT_SUCCESS);
         } else if (touche == '\r' || touche == '\n' || touche == ' ') {
             return selection;
+        } else if (touche == TOUCHE_ECHAP && echap_autorise) {
+            return nbr_options - 1;
         } else if (touche >= '1' && touche <= '9' && touche - '1' < nbr_options) {
             // Raccourci : le numéro sélectionne et valide directement l'option
             selection = touche - '1';
-            redessiner_options(options, nbr_options, selection);
+            debut = ajuster_fenetre(selection, debut);
+            redessiner_options(options, nbr_options, selection, debut, aide);
             return selection;
         } else if (touche == 'z') { // Flèche haut (ou z)
             selection = (selection + nbr_options - 1) % nbr_options;
-            redessiner_options(options, nbr_options, selection);
+            debut = ajuster_fenetre(selection, debut);
+            redessiner_options(options, nbr_options, selection, debut, aide);
         } else if (touche == 's') { // Flèche bas (ou s)
             selection = (selection + 1) % nbr_options;
-            redessiner_options(options, nbr_options, selection);
+            debut = ajuster_fenetre(selection, debut);
+            redessiner_options(options, nbr_options, selection, debut, aide);
         }
     }
+}
+
+int choisir_option(const char *titre, const char *options[], int nbr_options) {
+    return choisir_option_echap(titre, options, nbr_options, 1);
 }
 
 int get_action_initial(void){
@@ -138,7 +181,8 @@ int get_action_initial(void){
         "Quitter"
     };
 
-    return choisir_option("Choisissez une action parmi ce qui suit :", options, 6) + 1;
+    // Échap désactivé ici : une fausse manipulation ne doit pas quitter le jeu
+    return choisir_option_echap("Choisissez une action parmi ce qui suit :", options, 6, 0) + 1;
 }
 
 int labyrinthe_disponible(void) {
@@ -183,16 +227,18 @@ int charger_noms_joueurs(char noms[NBR_JOUEURS_MAX][TAILLE_NOM]) {
     int nbr_noms = 0;
     char nom_lu[TAILLE_NOM];
 
-    // 1) Les noms déjà utilisés, du plus récent au plus ancien
+    // Cas normal : les noms déjà utilisés, du plus récent au plus ancien
     FILE *f = fopen(FICHIER_JOUEURS, "r");
     if (f) {
         while (fscanf(f, "%" STR(TAILLE_NOM_MAX) "s", nom_lu) == 1) {
             nbr_noms = ajouter_nom(noms, nbr_noms, nom_lu);
         }
         fclose(f);
+        return nbr_noms;
     }
 
-    // 2) Les joueurs présents dans les classements des labyrinthes (anciennes sessions)
+    // Premier lancement (pas encore de FICHIER_JOUEURS) : on retrouve une seule fois les joueurs
+    // des classements des labyrinthes, puis on les enregistre pour ne plus ouvrir tous les fichiers.
     DIR *d = opendir(DOSSIER_LABYRINTHES);
     if (d) {
         struct dirent *dir;
@@ -206,6 +252,16 @@ int charger_noms_joueurs(char noms[NBR_JOUEURS_MAX][TAILLE_NOM]) {
             liberer_grille(&grille);
         }
         closedir(d);
+    }
+
+    if (nbr_noms > 0) {
+        f = fopen(FICHIER_JOUEURS, "w");
+        if (f) {
+            for (int i = 0; i < nbr_noms; i++) {
+                fprintf(f, "%s\n", noms[i]);
+            }
+            fclose(f);
+        }
     }
 
     return nbr_noms;
@@ -382,7 +438,8 @@ void afficher_regles(void) {
     printf("\n Déplacements :\n");
     printf("   z : haut    s : bas    q : gauche    d : droite  (ou les flèches du clavier)\n");
     printf("   Pas besoin d'appuyer sur Entrée : le joueur bouge dès que la touche est pressée.\n");
-    printf("   %c : abandonner la partie et revenir au menu\n", MVT_TOUCHE_RETOUR);
+    printf("   %c ou Échap : abandonner la partie et revenir au menu\n", MVT_TOUCHE_RETOUR);
+    printf("   Dans les menus, Échap revient aussi au menu principal.\n");
 
     printf("\n Les caractères du labyrinthe :\n");
     printf("   #  Mur : infranchissable.\n");

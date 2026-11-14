@@ -90,11 +90,12 @@ int mouvement_joueur(Grille *grille, Joueur *joueur){
             x++;
             break;
         case MVT_TOUCHE_RETOUR:
+        case TOUCHE_ECHAP:
             return MVT_RETOUR;
         default:
             // Le joueur reste affiché à sa place, aucun point n'est compté
             snprintf(joueur->message, TAILLE_MESSAGE,
-                     "Touche invalide (utilisez z, q, s, d ou les flèches, %c pour revenir au menu).",
+                     "Touche invalide (utilisez z, q, s, d ou les flèches, %c ou Échap pour revenir au menu).",
                      MVT_TOUCHE_RETOUR);
             return MVT_INVALIDE;
     }
@@ -312,7 +313,7 @@ static void afficher_informations(Grille *grille, Joueur *joueur){
         legende(MOTIF_OGRE, "ogre");
         legende(MOTIF_FANTOME, "fantôme");
     }
-    printf("\n\n Déplacements : z q s d ou flèches   |   %c : revenir au menu\n", MVT_TOUCHE_RETOUR);
+    printf("\n\n Déplacements : z q s d ou flèches   |   %c ou Échap : revenir au menu\n", MVT_TOUCHE_RETOUR);
 
     if (joueur->message[0] != '\0') {
         printf("\n %s>> %s%s\n", COULEUR_JAUNE, joueur->message, COULEUR_RESET);

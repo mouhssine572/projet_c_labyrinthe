@@ -16,6 +16,7 @@
     #include <termios.h>
     #include <unistd.h>
     #include <signal.h>
+    #include <sys/select.h>
     #define ENTREE_EST_TERMINAL() isatty(fileno(stdin))
 #endif
 
@@ -51,6 +52,24 @@ static void passer_en_mode_brut(void) {
     if (tcsetattr(STDIN_FILENO, TCSANOW, &brut) == 0) {
         terminal_brut = 1;
     }
+}
+
+/* Délai pour distinguer Échap seul d'une séquence de flèche (ESC [ A...), en millisecondes. */
+#define DELAI_ECHAP_MS 50
+
+/* Lit un octet directement sur le descripteur (sans le tampon de stdio, pour que select
+ * voie bien ce qui reste à lire). Si attente_ms >= 0, abandonne après ce délai.
+ * Renvoie l'octet lu, ou -1 si rien n'est arrivé (ou fin de l'entrée). */
+static int lire_octet(int attente_ms) {
+    if (attente_ms >= 0) {
+        fd_set ensemble;
+        struct timeval delai = { 0, attente_ms * 1000 };
+        FD_ZERO(&ensemble);
+        FD_SET(STDIN_FILENO, &ensemble);
+        if (select(STDIN_FILENO + 1, &ensemble, NULL, NULL, &delai) <= 0) return -1;
+    }
+    unsigned char octet;
+    return (read(STDIN_FILENO, &octet, 1) == 1) ? octet : -1;
 }
 #endif
 
@@ -98,12 +117,17 @@ int lire_touche(void) {
             default: return '?';
         }
     }
+    if (c == TOUCHE_ECHAP) return TOUCHE_ECHAP;
 #else
     passer_en_mode_brut();
-    c = getchar();
-    if (c == 27) { // Séquence d'échappement des flèches : ESC [ A/B/C/D
-        int c2 = getchar();
-        int c3 = (c2 == '[' || c2 == 'O') ? getchar() : 0;
+    c = lire_octet(-1);
+    if (c == TOUCHE_ECHAP) { // Échap seul, ou séquence des flèches : ESC [ A/B/C/D
+        int c2 = lire_octet(DELAI_ECHAP_MS);
+        if (c2 == -1) { // Rien ne suit : c'était la touche Échap
+            restaurer_terminal();
+            return TOUCHE_ECHAP;
+        }
+        int c3 = (c2 == '[' || c2 == 'O') ? lire_octet(DELAI_ECHAP_MS) : 0;
         restaurer_terminal();
         switch (c3) {
             case 'A': return 'z';
@@ -114,7 +138,7 @@ int lire_touche(void) {
         }
     }
     restaurer_terminal();
-    if (c == EOF) return TOUCHE_FIN;
+    if (c == -1) return TOUCHE_FIN;
 #endif
 
     if (c == CTRL_C || c == CTRL_D || c == CTRL_Z) return TOUCHE_FIN;

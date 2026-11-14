@@ -12,6 +12,9 @@
 /* Nombre maximal de labyrinthes proposés dans la liste de choix. */
 #define NBR_LABYRINTHES_MAX 100
 
+/* Nombre maximal d'options affichées à la fois dans un menu (au-delà, la liste défile). */
+#define TAILLE_FENETRE_MENU 10
+
 /* Dimensions autorisées pour un labyrinthe (valeurs impaires). */
 #define DIMENSION_MIN 3
 #define DIMENSION_MAX 201
@@ -40,6 +43,8 @@ void lire_mot(char *destination);
 /**
  * @brief Affiche un menu navigable avec les flèches haut/bas, validé par Entrée.
  * * On peut aussi taper directement le numéro d'une option (1 à 9).
+ * * Échap choisit la dernière option, qui doit donc être « Revenir au menu ».
+ * * Au-delà de TAILLE_FENETRE_MENU options, seule une partie est affichée et la liste défile.
  * * Si l'entrée n'est pas un terminal, l'utilisateur saisit simplement le numéro.
  * @param titre Titre affiché au-dessus des options.
  * @param options Libellés des options.
@@ -86,8 +91,9 @@ int get_nom_labyrinthe(char *nom_labyrinthe);
 
 /**
  * @brief Charge les noms des joueurs déjà connus, du plus récent au plus ancien.
- * * Les noms viennent du fichier FICHIER_JOUEURS, puis des classements des labyrinthes
- *   existants (pour retrouver les joueurs des sessions précédentes). Sans doublon.
+ * * Les noms viennent du fichier FICHIER_JOUEURS. S'il n'existe pas encore, ils sont retrouvés
+ *   une seule fois dans les classements des labyrinthes existants, puis enregistrés dans
+ *   FICHIER_JOUEURS pour les lancements suivants. Sans doublon.
  * @param noms Tableau où ranger les noms.
  * @return int Le nombre de noms trouvés (au plus NBR_JOUEURS_MAX).
  */

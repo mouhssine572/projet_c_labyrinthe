@@ -3,6 +3,7 @@
 # Usage :
 #   make                # construit l'exécutable principal
 #   make test           # construit et lance les tests
+#   make memcheck       # lance les tests sous Valgrind (fuites et erreurs mémoire)
 #   make clean          # nettoie les fichiers objets (.o, .d)
 #   make distclean      # nettoie les binaires et les dossiers de construction
 #   BUILD=debug make    # ajoute -g -O0 pour le débogage
@@ -60,7 +61,7 @@ DEPS = $(MAIN_OBJS:.o=.d) \
        $(BUILD_DIR)/test_labyrinthe.d \n       $(BUILD_DIR)/test_menu.d
 
 # Cibles phony et cible par défaut
-.PHONY: all test clean distclean dirs
+.PHONY: all test memcheck clean distclean dirs
 
 # Cible par défaut
 all: dirs $(EXEC)
@@ -74,6 +75,15 @@ test: dirs $(ALL_TEST_EXECS)
 	@echo "--- Exécution des tests du menu ---"
 	./$(TEST_MENU_EXEC)
 	@$(RM) temp_input.txt # Nettoie le fichier temporaire de test_jouer.c
+
+# Lance les tests sous Valgrind : échoue en cas de fuite ou d'accès mémoire invalide
+# (installation : sudo apt install valgrind). Pour le jeu lui-même : valgrind --leak-check=full ./bin/main
+VALGRIND = valgrind --leak-check=full --show-leak-kinds=definite --errors-for-leak-kinds=definite --error-exitcode=1 -q
+memcheck: dirs $(ALL_TEST_EXECS)
+	$(VALGRIND) ./$(TEST_LABY_EXEC)
+	$(VALGRIND) ./$(TEST_JOUER_EXEC)
+	$(VALGRIND) ./$(TEST_MENU_EXEC)
+	@$(RM) temp_input.txt
 
 # -------------------------- Règles de construction ----------------------------
 

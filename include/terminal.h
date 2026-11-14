@@ -16,6 +16,9 @@
 /* Valeur renvoyée par lire_touche quand l'entrée est fermée (Ctrl+D, Ctrl+Z, Ctrl+C). */
 #define TOUCHE_FIN (-1)
 
+/* Valeur renvoyée par lire_touche pour la touche Échap seule. */
+#define TOUCHE_ECHAP 27
+
 /**
  * @brief Prépare le terminal : active les codes ANSI et l'UTF-8 sous Windows.
  * * À appeler une fois au début du programme. Sans effet particulier sous Linux/macOS.
@@ -25,6 +28,8 @@ void initialiser_terminal(void);
 /**
  * @brief Lit une touche sans attendre Entrée (_getch sous Windows, termios sous Linux/macOS).
  * * Les flèches du clavier sont converties en z (haut), s (bas), q (gauche), d (droite).
+ * * La touche Échap seule renvoie TOUCHE_ECHAP (sous Linux/macOS, on attend un court instant
+ *   pour la distinguer du début d'une séquence de flèche).
  * * Si l'entrée standard n'est pas un terminal (fichier, tube, tests), la lecture se fait
  *   normalement caractère par caractère en ignorant les espaces et retours à la ligne.
  * @return int Le caractère lu, ou TOUCHE_FIN si l'entrée est fermée.
