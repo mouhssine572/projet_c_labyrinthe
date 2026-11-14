@@ -302,6 +302,14 @@ static void afficher_informations(Grille *grille, Joueur *joueur){
            joueur->have_key ? "oui" : "non",
            nom_mode(grille->mode));
 
+    // Le record à battre (le classement est trié : la première place est la meilleure)
+    Top_Player *record = &grille->top_scores[0];
+    if (record->name != NULL) {
+        printf(" Record à battre : %s%d%s par %s\n", COULEUR_GRAS, record->score, COULEUR_RESET, record->name);
+    } else {
+        printf(" Record à battre : aucun, soyez le premier !\n");
+    }
+
     printf(" ");
     legende(MOTIF_JOUEUR, "vous");
     legende(MOTIF_KEY, "clé");

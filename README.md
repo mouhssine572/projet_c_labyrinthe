@@ -148,7 +148,7 @@ Au lancement du programme, vous avez 6 options :
    - `s` ou ↓ : Reculer (bas)
    - `0` ou Échap : Abandonner et revenir au menu
 5. Ramassez la clé ($) et atteignez la sortie (-) pour gagner
-6. Votre score et la clé s'affichent sous la carte
+6. Votre score, la clé et le **record à battre** (meilleur score du labyrinthe et son auteur) s'affichent sous la carte
 7. À la fin de la partie, choisissez « Rejouer le même labyrinthe » ou « Revenir au menu »
 
 ## 📊 Système de Scoring
