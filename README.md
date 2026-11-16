@@ -13,6 +13,7 @@ Le jeu se joue dans une fenêtre graphique (`./bin/labyrinthe`, programme `src/g
 - Déplacements fluides (flèches ou Z Q S D, touche maintenue pour avancer en continu) et flash coloré lors d'un piège, d'un bonus, de la clé ou du fantôme
 - Bandeau avec le score, la clé, le mode et le record à battre ; la caméra suit le joueur sur les grands labyrinthes
 - Construction du labyrinthe animée à la création, écran de victoire ou de défaite avec « Rejouer »
+- Effets sonores (`src/sons.c`, avec SDL2_mixer) : pas, choc contre un mur, porte fermée, clé, piège, bonus, fantôme, ogre, victoire et menus. Les sons sont synthétisés par le programme (aucun fichier audio). La touche **M** coupe ou remet le son ; sans carte son, le jeu continue en silence
 
 La logique du jeu (`labyrinthe.c`, `jouer.c`, `menu.c`) est partagée avec la version terminal, qui reste disponible (`./bin/main`).
 
@@ -81,6 +82,7 @@ projet_c/
 │   └── minunit.h         # Framework de tests unitaires
 ├── src/
 │   ├── graphique.c       # Version 2D : fenêtre, dessins, menus à la souris (SDL2)
+│   ├── sons.c            # Effets sonores synthétisés (SDL2_mixer)
 │   ├── main.c            # Point d'entrée de la version terminal
 │   ├── labyrinthe.c      # Implémentation du labyrinthe
 │   ├── jouer.c           # Implémentation du joueur et gameplay
@@ -100,7 +102,7 @@ projet_c/
 
 ### Prérequis
 - GCC (compilateur C) et Make : sous Ubuntu / WSL, `sudo apt install build-essential`
-- SDL2 et SDL2_ttf pour la version 2D : `sudo apt install libsdl2-dev libsdl2-ttf-dev`
+- SDL2, SDL2_ttf et SDL2_mixer pour la version 2D : `sudo apt install libsdl2-dev libsdl2-ttf-dev libsdl2-mixer-dev`
 - Valgrind (facultatif, pour `make memcheck`) : `sudo apt install valgrind`
 
 ### Commandes de Compilation

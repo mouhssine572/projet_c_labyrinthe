@@ -17,6 +17,7 @@
 #include "jouer.h"
 #include "labyrinthe.h"
 #include "menu.h"
+#include "sons.h"
 #include "terminal.h" /* TOUCHE_ECHAP */
 
 /* ------------------------------------------------------------------------------------------
@@ -624,7 +625,9 @@ static void dessiner_partie(App *app, void *donnees) {
         int alpha = age_message < DUREE_MESSAGE ? 255 : 255 - (int) ((age_message - DUREE_MESSAGE) * 255 / 600);
         texte(app, app->police_gras, p->message, app->largeur / 2.0f, y_barre + 2, avec_alpha(ACCENT, alpha), CENTRE);
     }
-    texte(app, app->police_petite, "Flèches ou Z Q S D : se déplacer      Échap : abandonner",
+    texte(app, app->police_petite, sons_muet()
+              ? "Flèches ou Z Q S D : se déplacer      M : remettre le son      Échap : abandonner"
+              : "Flèches ou Z Q S D : se déplacer      M : couper le son      Échap : abandonner",
           app->largeur / 2.0f, y_barre + 32, TEXTE_DOUX, CENTRE);
 }
 
@@ -635,26 +638,43 @@ static void flash(Partie *p, SDL_Color couleur) {
 
 /* Joue un tour avec la touche donnée ('z', 'q', 's' ou 'd'). Renvoie l'état de la partie. */
 static int jouer_coup(Partie *p, int touche) {
-    int score_avant = p->joueur.score;
-    int cle_avant = p->joueur.have_key;
+    int ligne_avant = p->joueur.x, colonne_avant = p->joueur.y;
+    int dl = (touche == 's') - (touche == 'z');
+    int dc = (touche == 'd') - (touche == 'q');
+
+    /* La case visée, regardée avant le déplacement (après, la clé ou le bonus ont disparu) */
+    int cl = ligne_avant + dl, cc = colonne_avant + dc;
+    int dans_grille = cl >= 0 && cl < p->grille.hauteur && cc >= 0 && cc < p->grille.largeur;
+    char cible = dans_grille ? p->grille.cases[cl][cc] : MOTIF_MUR;
 
     p->joueur.message[0] = '\0';
     if (appliquer_touche(&p->grille, &p->joueur, touche) != MVT_JOUE) return PARTIE_EN_COURS;
 
-    p->dir_ligne = (touche == 's') - (touche == 'z');
-    p->dir_colonne = (touche == 'd') - (touche == 'q');
+    p->dir_ligne = dl;
+    p->dir_colonne = dc;
 
-    /* Un pas normal ajoute 1 point : plus, c'est un piège ; moins, c'est un bonus */
+    int a_bouge = (p->joueur.x != ligne_avant || p->joueur.y != colonne_avant);
+    Son son = SON_PAS;
+    if (!a_bouge) {
+        son = (cible == MOTIF_SORTIE) ? SON_PORTE : SON_MUR; /* Sortie fermée ou mur */
+    } else if (cible == MOTIF_TRAP) {
+        son = SON_PIEGE;
+        flash(p, ROUGE);
+    } else if (cible == MOTIF_BOOST) {
+        son = SON_BONUS;
+        flash(p, VERT);
+    } else if (cible == MOTIF_KEY) {
+        son = SON_CLE;
+        flash(p, OR);
+    }
+
     int score_apres_pas = p->joueur.score;
-    if (score_apres_pas > score_avant + 1) flash(p, ROUGE);
-    if (score_apres_pas < score_avant + 1) flash(p, VERT);
-    if (!cle_avant && p->joueur.have_key) flash(p, OR);
-
     int etat = resoudre_tour(&p->grille, &p->joueur, &p->ogre, &p->fantome);
 
-    if (p->joueur.score > score_apres_pas) flash(p, CYAN); /* Score doublé par le fantôme */
-    if (etat == PARTIE_PERDUE) flash(p, ROUGE);
-    if (etat == PARTIE_GAGNEE) flash(p, VERT);
+    if (p->joueur.score > score_apres_pas) { flash(p, CYAN); son = SON_FANTOME; } /* Score doublé */
+    if (etat == PARTIE_PERDUE) { flash(p, ROUGE); son = SON_OGRE; }
+    if (etat == PARTIE_GAGNEE) { flash(p, VERT); son = SON_VICTOIRE; }
+    sons_jouer(son);
 
     if (p->joueur.message[0] != '\0') {
         snprintf(p->message, sizeof p->message, "%s", p->joueur.message);
@@ -731,7 +751,9 @@ static int gui_choisir(App *app, const Menu *m) {
 
     while (1) {
         SDL_Event e;
-        while (SDL_PollEvent(&e)) {
+        int choix = -1;
+        int ancienne_selection = selection;
+        while (choix < 0 && SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
                 app->quitter = 1;
                 return n - 1;
@@ -744,9 +766,10 @@ static int gui_choisir(App *app, const Menu *m) {
                 else if (k == SDLK_END) selection = n - 1;
                 else if (k == SDLK_PAGEUP) selection = maxi(0, selection - visibles);
                 else if (k == SDLK_PAGEDOWN) selection = mini(n - 1, selection + visibles);
-                else if (k == SDLK_RETURN || k == SDLK_KP_ENTER || k == SDLK_SPACE) return selection;
-                else if (k == SDLK_ESCAPE && m->echap) return n - 1;
-                else if (chiffre >= 1 && chiffre <= n) return chiffre - 1;
+                else if (k == SDLK_RETURN || k == SDLK_KP_ENTER || k == SDLK_SPACE) choix = selection;
+                else if (k == SDLK_ESCAPE && m->echap) choix = n - 1;
+                else if (k == SDLK_m) sons_basculer_muet();
+                else if (chiffre >= 1 && chiffre <= n) choix = chiffre - 1;
                 debut = ajuster_debut(selection, debut, visibles, n);
             } else if (e.type == SDL_MOUSEMOTION) {
                 for (int k = 0; k < nbr_boutons; k++) {
@@ -754,13 +777,18 @@ static int gui_choisir(App *app, const Menu *m) {
                 }
             } else if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
                 for (int k = 0; k < nbr_boutons; k++) {
-                    if (point_dans(e.button.x, e.button.y, boutons[k])) return debut + k;
+                    if (point_dans(e.button.x, e.button.y, boutons[k])) choix = debut + k;
                 }
             } else if (e.type == SDL_MOUSEWHEEL) {
                 debut = maxi(0, mini(debut - e.wheel.y, n - visibles));
                 selection = maxi(debut, mini(selection, debut + visibles - 1));
             }
         }
+        if (choix >= 0) {
+            sons_jouer(SON_VALIDER);
+            return choix;
+        }
+        if (selection != ancienne_selection) sons_jouer(SON_MENU);
 
         debut_image(app);
         if (m->fond != NULL) {
@@ -1061,7 +1089,7 @@ static int page_regles(App *app, void *donnees, int defilement) {
          "sans vous faire attraper par l'ogre."},
         {"Déplacements",
          "Flèches ou Z Q S D (W A S D marche aussi). Gardez une touche enfoncée pour avancer en continu. "
-         "Échap abandonne la partie. Dans les menus : flèches ou souris, Entrée ou clic pour valider, "
+         "Échap abandonne la partie. M coupe ou remet le son. Dans les menus : flèches ou souris, Entrée ou clic pour valider, "
          "chiffres 1 à 9 pour choisir directement, Échap pour revenir."},
     };
     for (int k = 0; k < 2; k++) {
@@ -1312,6 +1340,10 @@ static int gui_partie(App *app, const char *nom_joueur, char *nom_labyrinthe) {
                 return 0;
             }
             if (e.type != SDL_KEYDOWN || etat != PARTIE_EN_COURS || abandon) continue;
+            if (e.key.keysym.sym == SDLK_m && !e.key.repeat) {
+                sons_basculer_muet();
+                continue;
+            }
 
             int touche = touche_jeu(e.key.keysym.sym);
             Uint32 maintenant = SDL_GetTicks();
@@ -1506,6 +1538,10 @@ int main(int argc, char *argv[]) {
     SDL_SetRenderDrawBlendMode(app.rendu, SDL_BLENDMODE_BLEND);
     SDL_StopTextInput(); /* La saisie de texte n'est activée que dans les champs de saisie */
 
+    if (!sons_initialiser()) {
+        fprintf(stderr, "Son indisponible (%s) : le jeu continue sans son.\n", SDL_GetError());
+    }
+
     const char *options[] = {
         "Jouer",
         "Créer un labyrinthe",
@@ -1530,6 +1566,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    sons_liberer();
     TTF_CloseFont(app.police_titre);
     TTF_CloseFont(app.police_gras);
     TTF_CloseFont(app.police);
