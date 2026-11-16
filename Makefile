@@ -75,7 +75,7 @@ DEPS = $(MAIN_OBJS:.o=.d) \
        $(BUILD_DIR)/test_labyrinthe.d \n       $(BUILD_DIR)/test_menu.d
 
 # Cibles phony et cible par défaut
-.PHONY: all jeu console test memcheck clean distclean dirs
+.PHONY: all jeu console windows test memcheck clean distclean dirs
 
 # Cible par défaut
 all: dirs $(EXEC_GUI) $(EXEC)
@@ -159,6 +159,51 @@ $(TEST_LABY_EXEC): $(TEST_LABY_OBJS)
 # Règle pour l'exécutable de test du menu
 $(TEST_MENU_EXEC): $(TEST_MENU_OBJS)
 	$(CC) $^ -o $@
+
+# ------------------------- Version Windows (.exe) -----------------------------
+# « make windows » compile le jeu 2D pour Windows depuis Linux/WSL (compilateur MinGW :
+# sudo apt install gcc-mingw-w64-x86-64 zip). Le résultat est un dossier à donner tel quel :
+#   bin/Labyrinthe-Windows/      Labyrinthe.exe, les DLL de SDL2, la police et un mode d'emploi
+#   bin/Labyrinthe-Windows.zip   le même dossier, compressé
+# Les bibliothèques SDL2 pour Windows sont téléchargées la première fois (outils/sdl_windows.sh).
+
+WIN_CC     = x86_64-w64-mingw32-gcc
+WIN_BUILD  = $(BUILD_DIR)/windows
+WIN_SDL    = $(WIN_BUILD)/sdl
+WIN_DIST   = $(BIN_DIR)/Labyrinthe-Windows
+WIN_EXE    = $(WIN_DIST)/Labyrinthe.exe
+WIN_CFLAGS = -Wall -Wextra -O2 -I$(INC_DIR) -I$(WIN_SDL)/include/SDL2
+# -mwindows : pas de fenêtre de terminal ; -static-libgcc : une DLL de moins à livrer
+WIN_LIBS   = -L$(WIN_SDL)/lib -lmingw32 -lSDL2main -lSDL2_ttf -lSDL2_mixer -lSDL2 -lm -mwindows -static-libgcc
+WIN_OBJS   = $(patsubst $(SRC_DIR)/%.c, $(WIN_BUILD)/%.o, $(GUI_SRCS))
+# Police livrée avec le jeu (DejaVu, libre de redistribution) pour avoir le même rendu partout
+POLICE_DIR = /usr/share/fonts/truetype/dejavu
+
+windows: $(WIN_EXE)
+	@$(RM) $(BIN_DIR)/Labyrinthe-Windows.zip
+	@if command -v zip >/dev/null; then \
+	    cd $(BIN_DIR) && zip -qr Labyrinthe-Windows.zip Labyrinthe-Windows && \
+	    echo "Prêt : $(BIN_DIR)/Labyrinthe-Windows.zip"; \
+	else \
+	    echo "Prêt : $(WIN_DIST)/ (installez zip pour obtenir aussi un .zip)"; \
+	fi
+
+# Téléchargement des en-têtes, bibliothèques et DLL de SDL2 pour Windows (une seule fois)
+$(WIN_SDL)/include/SDL2/SDL.h:
+	sh outils/sdl_windows.sh $(WIN_SDL)
+
+$(WIN_BUILD)/%.o: $(SRC_DIR)/%.c $(WIN_SDL)/include/SDL2/SDL.h
+	@$(MKDIR_P) $(WIN_BUILD)
+	$(WIN_CC) $(WIN_CFLAGS) -c $< -o $@
+
+$(WIN_EXE): $(WIN_OBJS)
+	@$(MKDIR_P) $(WIN_DIST)/assets
+	$(WIN_CC) $^ -o $@ $(WIN_LIBS)
+	cp $(WIN_SDL)/bin/*.dll $(WIN_DIST)/
+	cp $(POLICE_DIR)/DejaVuSans.ttf $(WIN_DIST)/assets/police.ttf
+	cp $(POLICE_DIR)/DejaVuSans-Bold.ttf $(WIN_DIST)/assets/police-gras.ttf
+	cp outils/LICENCE-DejaVu.txt $(WIN_DIST)/assets/
+	cp outils/LISEZMOI-Windows.txt $(WIN_DIST)/LISEZMOI.txt
 
 # ----------------------------- Règles de nettoyage ----------------------------
 

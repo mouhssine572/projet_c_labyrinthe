@@ -1,0 +1,36 @@
+LABYRINTHE - version Windows
+============================
+
+Lancer le jeu
+-------------
+1. Décompressez le dossier (clic droit sur le .zip > « Extraire tout »).
+   Ne lancez pas le jeu depuis l'intérieur du .zip : il ne pourrait pas
+   enregistrer vos labyrinthes ni vos scores.
+2. Double-cliquez sur Labyrinthe.exe.
+
+Si Windows affiche « Windows a protégé votre ordinateur » (le jeu n'est pas
+signé), cliquez sur « Informations complémentaires » puis « Exécuter quand même ».
+
+Laissez les fichiers .dll et le dossier assets à côté de Labyrinthe.exe :
+le jeu en a besoin.
+
+But du jeu
+----------
+Ramassez la clé puis atteignez la sortie avec le score le plus bas possible,
+sans vous faire attraper par l'ogre. Les règles complètes sont dans le jeu
+(menu « Règles du jeu »).
+
+Commandes
+---------
+  Flèches ou Z Q S D   se déplacer (touche maintenue : avance en continu)
+  M                    couper / remettre le son
+  Échap                abandonner la partie, revenir dans les menus
+  Souris ou flèches    choisir dans les menus, Entrée ou clic pour valider
+
+Vos labyrinthes sont enregistrés dans le dossier « labyrinthe » et les noms
+des joueurs dans « joueurs.txt », à côté de Labyrinthe.exe.
+
+Crédits
+-------
+Bibliothèques SDL2, SDL2_ttf et SDL2_mixer (licence zlib) : https://libsdl.org
+Police DejaVu Sans : voir assets/LICENCE-DejaVu.txt

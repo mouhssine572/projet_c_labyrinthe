@@ -1492,21 +1492,41 @@ static TTF_Font *ouvrir_police(const char *chemins[], int nbr, int taille) {
     return NULL;
 }
 
+/* Signale une erreur qui empêche le jeu de démarrer : dans le terminal, et dans une boîte de
+ * dialogue (le .exe Windows n'a pas de terminal, le message serait sinon invisible). */
+static int erreur_fatale(const char *message, const char *detail) {
+    char texte_complet[512];
+    snprintf(texte_complet, sizeof texte_complet, "%s\n%s", message, detail ? detail : "");
+    fprintf(stderr, "%s\n", texte_complet);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Labyrinthe", texte_complet, NULL);
+    return EXIT_FAILURE;
+}
+
+/* Sous Windows, on se place dans le dossier du .exe : lancé depuis un raccourci ou un autre
+ * dossier, le jeu retrouve ainsi ses labyrinthes, joueurs.txt et sa police (assets/). */
+static void aller_dans_dossier_du_jeu(void) {
+#ifdef _WIN32
+    char *dossier = SDL_GetBasePath();
+    if (dossier != NULL) {
+        _chdir(dossier);
+        SDL_free(dossier);
+    }
+#endif
+}
+
 int main(int argc, char *argv[]) {
     (void) argc;
     (void) argv;
     App app;
     memset(&app, 0, sizeof app);
     srand((unsigned) time(NULL)); /* Le seul appel à srand du programme */
+    aller_dans_dossier_du_jeu();
 
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        fprintf(stderr, "Impossible d'initialiser SDL : %s\n", SDL_GetError());
-        return EXIT_FAILURE;
+        return erreur_fatale("Impossible d'initialiser SDL.", SDL_GetError());
     }
     if (TTF_Init() != 0) {
-        fprintf(stderr, "Impossible d'initialiser SDL_ttf : %s\n", TTF_GetError());
-        SDL_Quit();
-        return EXIT_FAILURE;
+        return erreur_fatale("Impossible d'initialiser SDL_ttf.", TTF_GetError());
     }
 
     int nbr_polices = (int) (sizeof POLICES / sizeof POLICES[0]);
@@ -1515,25 +1535,21 @@ int main(int argc, char *argv[]) {
     app.police        = ouvrir_police(POLICES, nbr_polices, 19);
     app.police_petite = ouvrir_police(POLICES, nbr_polices, 15);
     if (!app.police_titre || !app.police_gras || !app.police || !app.police_petite) {
-        fprintf(stderr, "Aucune police trouvée. Copiez un fichier .ttf dans assets/police.ttf "
-                        "et assets/police-gras.ttf (ou installez fonts-dejavu-core).\n");
-        TTF_Quit();
-        SDL_Quit();
-        return EXIT_FAILURE;
+        return erreur_fatale("Aucune police trouvée.",
+                             "Copiez un fichier .ttf dans assets/police.ttf et assets/police-gras.ttf "
+                             "(ou installez fonts-dejavu-core).");
     }
 
     app.fenetre = SDL_CreateWindow("Labyrinthe", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                    FENETRE_LARGEUR, FENETRE_HAUTEUR, SDL_WINDOW_RESIZABLE);
     if (app.fenetre == NULL) {
-        fprintf(stderr, "Impossible de créer la fenêtre : %s\n", SDL_GetError());
-        return EXIT_FAILURE;
+        return erreur_fatale("Impossible de créer la fenêtre.", SDL_GetError());
     }
     SDL_SetWindowMinimumSize(app.fenetre, FENETRE_LARGEUR_MIN, FENETRE_HAUTEUR_MIN);
     app.rendu = SDL_CreateRenderer(app.fenetre, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (app.rendu == NULL) app.rendu = SDL_CreateRenderer(app.fenetre, -1, SDL_RENDERER_SOFTWARE);
     if (app.rendu == NULL) {
-        fprintf(stderr, "Impossible de créer le rendu : %s\n", SDL_GetError());
-        return EXIT_FAILURE;
+        return erreur_fatale("Impossible de créer le rendu.", SDL_GetError());
     }
     SDL_SetRenderDrawBlendMode(app.rendu, SDL_BLENDMODE_BLEND);
     SDL_StopTextInput(); /* La saisie de texte n'est activée que dans les champs de saisie */

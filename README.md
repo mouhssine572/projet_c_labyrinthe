@@ -92,6 +92,10 @@ projet_c/
 │       ├── test_labyrinthe.c  # Tests du système de labyrinthe
 │       ├── test_jouer.c       # Tests du système de joueur
 │       └── test_menu.c        # Tests du menu (noms valides, labyrinthes existants)
+├── outils/
+│   ├── sdl_windows.sh         # Télécharge SDL2 pour Windows (utilisé par make windows)
+│   ├── LISEZMOI-Windows.txt   # Mode d'emploi livré avec le .exe
+│   └── LICENCE-DejaVu.txt     # Licence de la police livrée avec le .exe
 ├── build/                # Fichiers objets et dépendances (.o, .d)
 ├── bin/                  # Exécutables compilés
 ├── labyrinthe/           # Dossier de sauvegarde des labyrinthes (créé automatiquement)
@@ -119,6 +123,13 @@ make console    # seulement la version terminal (sans SDL2)
 ./bin/labyrinthe
 ```
 Sous WSL avec Windows 11, la fenêtre s'ouvre directement sous Windows (WSLg).
+
+**Créer la version Windows (.exe), à donner à d'autres joueurs :**
+```bash
+sudo apt install gcc-mingw-w64-x86-64 zip   # une seule fois
+make windows
+```
+Le jeu est compilé pour Windows depuis Linux/WSL avec MinGW. Les bibliothèques SDL2 pour Windows sont téléchargées automatiquement la première fois (`outils/sdl_windows.sh`). Le résultat, `bin/Labyrinthe-Windows.zip`, contient `Labyrinthe.exe`, les DLL de SDL2, la police et un `LISEZMOI.txt` : il suffit de le décompresser et de double-cliquer sur `Labyrinthe.exe`, sans rien installer.
 
 **Lancer la version terminal :**
 ```bash
