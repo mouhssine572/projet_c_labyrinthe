@@ -33,14 +33,14 @@ int mouvement_valide(Grille *grille, int x, int y, Joueur *joueur){
     if(cible == MOTIF_MUR) return 0;
 
     if(cible == MOTIF_SORTIE && joueur -> have_key == 0){
-        snprintf(joueur -> message, TAILLE_MESSAGE, "La sortie est fermée : allez d'abord chercher la clé (%c).", MOTIF_KEY);
+        snprintf(joueur -> message, TAILLE_MESSAGE, "La sortie est fermée : allez d'abord chercher la clé.");
         return 0;
     }
 
     switch (cible) {
         case MOTIF_KEY:
             joueur -> have_key = 1;
-            snprintf(joueur -> message, TAILLE_MESSAGE, "Clé ramassée ! Rejoignez la sortie (%c).", MOTIF_SORTIE);
+            snprintf(joueur -> message, TAILLE_MESSAGE, "Clé ramassée ! Rejoignez la sortie.");
             break;
         case MOTIF_TRAP:
             joueur -> score = n + PENALITE_PIEGE;
@@ -70,11 +70,14 @@ static char case_apres_passage(char c){
 }
 
 int mouvement_joueur(Grille *grille, Joueur *joueur){
-    int x = joueur->x;
-    int y = joueur->y;
-
     int touche = lire_touche();
     if (touche == TOUCHE_FIN) return MVT_FIN; // Fin de l'entrée standard
+    return appliquer_touche(grille, joueur, touche);
+}
+
+int appliquer_touche(Grille *grille, Joueur *joueur, int touche){
+    int x = joueur->x;
+    int y = joueur->y;
 
     switch(touche){
         case 'z':
@@ -338,8 +341,8 @@ static void afficher_tour(Grille *grille, Joueur *joueur, Monstre *monstres[]){
 void fantome_attrape_joueur(Grille *grille, Monstre *fantome, Joueur *joueur){
     joueur->score *= 2;
     snprintf(joueur->message, TAILLE_MESSAGE,
-             "Le fantôme (%c) vous a attrapé : votre score est doublé ! Nouveau score : %d",
-             fantome->symbole, get_score_joueur(joueur));
+             "Le fantôme vous a attrapé : votre score est doublé ! Nouveau score : %d",
+             get_score_joueur(joueur));
 
     // Le fantôme réapparaît ailleurs pour ne pas attaquer à chaque tour
     placer_monstre(grille, fantome, joueur);
@@ -364,23 +367,45 @@ void preparer_monstres(Grille *grille, Monstre *ogre, Monstre *fantome, Joueur *
     }
 }
 
-int jouer_labyrinthe(Grille *grille, Joueur *joueur){
-    Monstre ogre;
-    Monstre fantome;
-    Monstre *monstres[NBR_MONSTRES_MAX] = {&fantome, &ogre}; // L'ogre est dessiné par-dessus le fantôme
-    int difficile = (grille->mode == MODE_DIFFICILE);
-    int normal = (grille->mode == MODE_NORMAL);
-
-    preparer_monstres(grille, &ogre, &fantome, joueur);
+void demarrer_partie(Grille *grille, Joueur *joueur, Monstre *ogre, Monstre *fantome){
+    preparer_monstres(grille, ogre, fantome, joueur);
 
     // Le joueur est affiché dès le départ, sur l'entrée (sans compter de point)
     joueur->case_dessous = grille->cases[joueur->x][joueur->y];
     grille->cases[joueur->x][joueur->y] = MOTIF_JOUEUR;
-    const char *avertissement = difficile ? " Attention : ogre chasseur et fantôme !"
-                              : normal    ? " Attention à l'ogre !"
+    const char *avertissement = grille->mode == MODE_DIFFICILE ? " Attention : ogre chasseur et fantôme !"
+                              : grille->mode == MODE_NORMAL    ? " Attention à l'ogre !"
                               : "";
-    snprintf(joueur->message, TAILLE_MESSAGE, "Ramassez la clé (%c) puis rejoignez la sortie (%c).%s",
-             MOTIF_KEY, MOTIF_SORTIE, avertissement);
+    snprintf(joueur->message, TAILLE_MESSAGE, "Ramassez la clé puis rejoignez la sortie.%s", avertissement);
+}
+
+int resoudre_tour(Grille *grille, Joueur *joueur, Monstre *ogre, Monstre *fantome){
+    // Le joueur s'est jeté sur un monstre
+    if (monstre_attrape_joueur(ogre, joueur)) goto attrape_par_ogre;
+    if (monstre_attrape_joueur(fantome, joueur)) fantome_attrape_joueur(grille, fantome, joueur);
+
+    if (joueur_gagne(grille, joueur)) {
+        snprintf(joueur->message, TAILLE_MESSAGE,
+                 "Bravo, vous avez trouvé la sortie avec un score de %d !", get_score_joueur(joueur));
+        return PARTIE_GAGNEE;
+    }
+
+    // Tour des monstres
+    if (deplacer_monstre(grille, ogre, joueur)) goto attrape_par_ogre;
+    if (deplacer_monstre(grille, fantome, joueur)) fantome_attrape_joueur(grille, fantome, joueur);
+    return PARTIE_EN_COURS;
+
+attrape_par_ogre:
+    snprintf(joueur->message, TAILLE_MESSAGE, "L'ogre vous a attrapé ! Partie terminée.");
+    return PARTIE_PERDUE;
+}
+
+int jouer_labyrinthe(Grille *grille, Joueur *joueur){
+    Monstre ogre;
+    Monstre fantome;
+    Monstre *monstres[NBR_MONSTRES_MAX] = {&fantome, &ogre}; // L'ogre est dessiné par-dessus le fantôme
+
+    demarrer_partie(grille, joueur, &ogre, &fantome);
 
     while (1) {
         afficher_tour(grille, joueur, monstres);
@@ -397,25 +422,12 @@ int jouer_labyrinthe(Grille *grille, Joueur *joueur){
         }
         if (resultat == MVT_INVALIDE) continue; // Pas de tour joué : les monstres ne bougent pas
 
-        // Le joueur s'est jeté sur un monstre
-        if (monstre_attrape_joueur(&ogre, joueur)) break;
-        if (monstre_attrape_joueur(&fantome, joueur)) fantome_attrape_joueur(grille, &fantome, joueur);
-
-        if (joueur_gagne(grille, joueur)) {
-            snprintf(joueur->message, TAILLE_MESSAGE,
-                     "Bravo, vous avez trouvé la sortie avec un score de %d !", get_score_joueur(joueur));
+        int etat = resoudre_tour(grille, joueur, &ogre, &fantome);
+        if (etat != PARTIE_EN_COURS) {
             afficher_tour(grille, joueur, monstres);
-            return 1;
+            return etat == PARTIE_GAGNEE;
         }
-
-        // Tour des monstres
-        if (deplacer_monstre(grille, &ogre, joueur)) break;
-        if (deplacer_monstre(grille, &fantome, joueur)) fantome_attrape_joueur(grille, &fantome, joueur);
     }
-
-    snprintf(joueur->message, TAILLE_MESSAGE, "L'ogre (%c) vous a attrapé ! Partie terminée.", MOTIF_OGRE);
-    afficher_tour(grille, joueur, monstres);
-    return 0;
 }
 
 int joueur_gagne(Grille *grille, Joueur *joueur){
@@ -490,4 +502,32 @@ void sauvegarder_score(Grille *grille_de_jeu, char *nom_labyrinthe) {
 
     memcpy(grille_sauvegarde.top_scores, scores_origine, sizeof scores_origine);
     liberer_grille(&grille_sauvegarde);
+}
+
+int enregistrer_victoire(Grille *grille, Joueur *joueur, const char *nom_joueur, char *nom_labyrinthe,
+                         char *message, int taille_message){
+    // On garde l'ancien record avant que le classement ne soit modifié
+    int ancien_record_existe = (grille->top_scores[0].name != NULL);
+    int ancien_record_score = grille->top_scores[0].score;
+    char ancien_record_nom[TAILLE_MESSAGE] = "";
+    if (ancien_record_existe) {
+        snprintf(ancien_record_nom, sizeof ancien_record_nom, "%s", grille->top_scores[0].name);
+    }
+
+    int place = set_score_joueur(grille, joueur, (char *) nom_joueur);
+    if (place == 0) {
+        snprintf(message, taille_message, "Votre score n'entre pas dans le top %d de ce labyrinthe.", NOMBRE_SCORE);
+        return 0;
+    }
+
+    sauvegarder_score(grille, nom_labyrinthe);
+    if (place == 1 && ancien_record_existe) {
+        snprintf(message, taille_message, "Nouveau record ! Ancien : %d par %s. Vous êtes 1er sur ce labyrinthe !",
+                 ancien_record_score, ancien_record_nom);
+    } else if (place == 1) {
+        snprintf(message, taille_message, "Premier record de ce labyrinthe ! Vous êtes 1er.");
+    } else {
+        snprintf(message, taille_message, "Vous êtes %de sur ce labyrinthe !", place);
+    }
+    return place;
 }

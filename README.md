@@ -4,6 +4,18 @@
 
 Ce projet est un jeu de labyrinthe interactif développé en C. Le programme permet de **créer**, **charger** et **jouer** dans des labyrinthes générés aléatoirement. Le jeu inclut un système de scores persistant, trois modes de difficulté et des menus navigables au clavier.
 
+## 🖼️ Version 2D
+
+Le jeu se joue dans une fenêtre graphique (`./bin/labyrinthe`, programme `src/graphique.c`, avec SDL2) :
+
+- Menus à boutons, utilisables à la souris ou au clavier (flèches, Entrée, chiffres 1 à 9, Échap)
+- Labyrinthe dessiné : murs en relief, porte de sortie avec cadenas (portail vert une fois la clé prise), clé qui brille, pièges à pics, bonus en gemmes, joueur, ogre et fantôme animés
+- Déplacements fluides (flèches ou Z Q S D, touche maintenue pour avancer en continu) et flash coloré lors d'un piège, d'un bonus, de la clé ou du fantôme
+- Bandeau avec le score, la clé, le mode et le record à battre ; la caméra suit le joueur sur les grands labyrinthes
+- Construction du labyrinthe animée à la création, écran de victoire ou de défaite avec « Rejouer »
+
+La logique du jeu (`labyrinthe.c`, `jouer.c`, `menu.c`) est partagée avec la version terminal, qui reste disponible (`./bin/main`).
+
 ## 🎮 Fonctionnalités
 
 ### 1. **Génération de Labyrinthe**
@@ -68,7 +80,8 @@ projet_c/
 │   ├── terminal.h        # Saisie sans Entrée, effacement de l'écran, couleurs
 │   └── minunit.h         # Framework de tests unitaires
 ├── src/
-│   ├── main.c            # Point d'entrée du programme
+│   ├── graphique.c       # Version 2D : fenêtre, dessins, menus à la souris (SDL2)
+│   ├── main.c            # Point d'entrée de la version terminal
 │   ├── labyrinthe.c      # Implémentation du labyrinthe
 │   ├── jouer.c           # Implémentation du joueur et gameplay
 │   ├── menu.c            # Implémentation du menu
@@ -87,16 +100,25 @@ projet_c/
 
 ### Prérequis
 - GCC (compilateur C) et Make : sous Ubuntu / WSL, `sudo apt install build-essential`
+- SDL2 et SDL2_ttf pour la version 2D : `sudo apt install libsdl2-dev libsdl2-ttf-dev`
 - Valgrind (facultatif, pour `make memcheck`) : `sudo apt install valgrind`
 
 ### Commandes de Compilation
 
-**Compiler le programme principal :**
+**Compiler le jeu (version 2D et version terminal) :**
 ```bash
-make
+make            # les deux
+make jeu        # seulement la version 2D
+make console    # seulement la version terminal (sans SDL2)
 ```
 
-**Lancer le jeu :**
+**Lancer le jeu en 2D (fenêtre) :**
+```bash
+./bin/labyrinthe
+```
+Sous WSL avec Windows 11, la fenêtre s'ouvre directement sous Windows (WSLg).
+
+**Lancer la version terminal :**
 ```bash
 ./bin/main
 ```

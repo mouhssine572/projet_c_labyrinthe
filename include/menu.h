@@ -91,6 +91,13 @@ int nom_valide(const char *nom);
 int est_nom_labyrinthe(const char *nom_fichier);
 
 /**
+ * @brief Remplit un tableau avec les noms des labyrinthes du répertoire "labyrinthe", triés.
+ * @param noms Tableau d'au moins NBR_LABYRINTHES_MAX noms.
+ * @return int Le nombre de labyrinthes trouvés.
+ */
+int lister_labyrinthes(char noms[NBR_LABYRINTHES_MAX][TAILLE_NOM]);
+
+/**
  * @brief Liste les labyrinthes du répertoire "labyrinthe" (ordre alphabétique) dans un menu
  *        navigable avec les flèches, suivi de l'option « Revenir au menu ».
  * @param nom_labyrinthe Buffer d'au moins TAILLE_NOM octets où stocker le nom choisi.

@@ -330,8 +330,7 @@ static int comparer_noms(const void *a, const void *b) {
     return strcmp((const char *)a, (const char *)b);
 }
 
-int get_nom_labyrinthe(char *nom_labyrinthe) {
-    char fichiers[NBR_LABYRINTHES_MAX][TAILLE_NOM];
+int lister_labyrinthes(char fichiers[NBR_LABYRINTHES_MAX][TAILLE_NOM]) {
     int nbr_fichiers = 0;
 
     DIR *d = opendir(DOSSIER_LABYRINTHES);
@@ -347,12 +346,18 @@ int get_nom_labyrinthe(char *nom_labyrinthe) {
         closedir(d);
     }
 
+    qsort(fichiers, nbr_fichiers, TAILLE_NOM, comparer_noms);
+    return nbr_fichiers;
+}
+
+int get_nom_labyrinthe(char *nom_labyrinthe) {
+    char fichiers[NBR_LABYRINTHES_MAX][TAILLE_NOM];
+    int nbr_fichiers = lister_labyrinthes(fichiers);
+
     if (nbr_fichiers == 0) {
         printf("Aucun labyrinthe disponible pour le moment.\n");
         return 0;
     }
-
-    qsort(fichiers, nbr_fichiers, TAILLE_NOM, comparer_noms);
 
     // Menu : les labyrinthes, puis "Revenir au menu"
     const char *options[NBR_LABYRINTHES_MAX + 1];

@@ -1,7 +1,9 @@
 # ==============================================================================
 # Makefile racine pour le Labyrinthe
 # Usage :
-#   make                # construit l'exécutable principal
+#   make                # construit le jeu en 2D (bin/labyrinthe) et la version terminal (bin/main)
+#   make jeu            # construit seulement le jeu en 2D (nécessite SDL2 et SDL2_ttf)
+#   make console        # construit seulement la version terminal
 #   make test           # construit et lance les tests
 #   make memcheck       # lance les tests sous Valgrind (fuites et erreurs mémoire)
 #   make clean          # nettoie les fichiers objets (.o, .d)
@@ -32,9 +34,17 @@ else
   CFLAGS += -O2
 endif
 
+# Bibliothèques de la version 2D (Ubuntu/WSL : sudo apt install libsdl2-dev libsdl2-ttf-dev)
+SDL_CFLAGS := $(shell pkg-config --cflags sdl2 SDL2_ttf 2>/dev/null || sdl2-config --cflags 2>/dev/null)
+SDL_LIBS   := $(shell pkg-config --libs sdl2 SDL2_ttf 2>/dev/null || echo "$$(sdl2-config --libs 2>/dev/null) -lSDL2_ttf")
+
 # Fichiers sources et objets du projet principal
 MAIN_SRCS = $(SRC_DIR)/main.c $(SRC_DIR)/labyrinthe.c $(SRC_DIR)/menu.c $(SRC_DIR)/jouer.c $(SRC_DIR)/terminal.c
 MAIN_OBJS = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(MAIN_SRCS))
+
+# Version 2D : la fenêtre (graphique.c) + la logique du jeu, sans main.c
+GUI_SRCS = $(SRC_DIR)/graphique.c $(SRC_DIR)/labyrinthe.c $(SRC_DIR)/menu.c $(SRC_DIR)/jouer.c $(SRC_DIR)/terminal.c
+GUI_OBJS = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(GUI_SRCS))
 
 # Fichiers sources et objets des tests
 TEST_JOUER_SRC     = $(TEST_DIR)/test_jouer.c
@@ -50,6 +60,7 @@ TEST_MENU_OBJS     = $(BUILD_DIR)/test_menu.o $(BUILD_DIR)/menu.o $(BUILD_DIR)/j
 
 # Exécutables
 EXEC      = $(BIN_DIR)/main
+EXEC_GUI  = $(BIN_DIR)/labyrinthe
 TEST_JOUER_EXEC = $(BIN_DIR)/test_jouer
 TEST_LABY_EXEC  = $(BIN_DIR)/test_labyrinthe
 TEST_MENU_EXEC  = $(BIN_DIR)/test_menu
@@ -57,14 +68,20 @@ ALL_TEST_EXECS  = $(TEST_LABY_EXEC) $(TEST_JOUER_EXEC) $(TEST_MENU_EXEC)
 
 # Fichiers de dépendances générés par -MMD
 DEPS = $(MAIN_OBJS:.o=.d) \
+       $(BUILD_DIR)/graphique.d \
        $(BUILD_DIR)/test_jouer.d \
        $(BUILD_DIR)/test_labyrinthe.d \n       $(BUILD_DIR)/test_menu.d
 
 # Cibles phony et cible par défaut
-.PHONY: all test memcheck clean distclean dirs
+.PHONY: all jeu console test memcheck clean distclean dirs
 
 # Cible par défaut
-all: dirs $(EXEC)
+all: dirs $(EXEC_GUI) $(EXEC)
+
+# Le jeu en 2D seul, ou la version terminal seule
+jeu: dirs $(EXEC_GUI)
+
+console: dirs $(EXEC)
 
 # Cible pour construire et exécuter tous les tests
 test: dirs $(ALL_TEST_EXECS)
@@ -95,6 +112,15 @@ dirs:
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@$(MKDIR_P) $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+
+# La fenêtre 2D a besoin des en-têtes de SDL2
+$(BUILD_DIR)/graphique.o: $(SRC_DIR)/graphique.c
+	@$(MKDIR_P) $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(SDL_CFLAGS) -c $< -o $@
+
+# Règle pour le jeu en 2D
+$(EXEC_GUI): $(GUI_OBJS)
+	$(CC) $^ -o $@ $(SDL_LIBS) -lm
 
 # Règle pour l'exécutable principal
 $(EXEC): $(MAIN_OBJS)
@@ -135,7 +161,7 @@ clean:
 
 # Nettoyage complet (supprime exécutables et dossiers)
 distclean: clean
-	@$(RM) $(EXEC)
+	@$(RM) $(EXEC) $(EXEC_GUI)
 	@$(RM) $(ALL_TEST_EXECS)
 	@$(RM) -r $(BUILD_DIR)
 	@$(RM) -r $(BIN_DIR)

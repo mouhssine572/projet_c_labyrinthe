@@ -12,6 +12,11 @@
 #define MVT_INVALIDE 2  /* Touche invalide : aucun tour joué */
 #define MVT_RETOUR 3    /* Le joueur abandonne pour revenir au menu */
 
+/* États d'une partie renvoyés par resoudre_tour. */
+#define PARTIE_EN_COURS 0
+#define PARTIE_GAGNEE 1
+#define PARTIE_PERDUE 2
+
 /* Touche permettant d'abandonner la partie et de revenir au menu. */
 #define MVT_TOUCHE_RETOUR '0'
 
@@ -81,6 +86,37 @@ int mouvement_valide(Grille *grille, int x, int y, Joueur *joueur);
  * MVT_RETOUR si le joueur demande à revenir au menu, MVT_FIN si l'entrée standard est fermée.
  */
 int mouvement_joueur(Grille *grille, Joueur *joueur);
+
+/**
+ * @brief Applique une touche au joueur (sans la lire) : déplacement, abandon ou touche invalide.
+ * * Utilisée par mouvement_joueur (terminal) et par la version graphique.
+ * @param grille Pointeur vers la Grille de jeu.
+ * @param joueur Pointeur vers la structure Joueur à déplacer.
+ * @param touche 'z', 'q', 's', 'd', MVT_TOUCHE_RETOUR ou TOUCHE_ECHAP.
+ * @return int MVT_JOUE, MVT_INVALIDE ou MVT_RETOUR.
+ */
+int appliquer_touche(Grille *grille, Joueur *joueur, int touche);
+
+/**
+ * @brief Prépare une partie : place les monstres selon le mode, pose le joueur sur l'entrée
+ *        et écrit le message de départ.
+ * @param grille Pointeur vers la Grille de jeu.
+ * @param joueur Pointeur vers le Joueur (déjà initialisé).
+ * @param ogre Pointeur vers l'ogre à préparer.
+ * @param fantome Pointeur vers le fantôme à préparer.
+ */
+void demarrer_partie(Grille *grille, Joueur *joueur, Monstre *ogre, Monstre *fantome);
+
+/**
+ * @brief Termine un tour après le déplacement du joueur : rencontres avec les monstres,
+ *        victoire, puis déplacement des monstres.
+ * @param grille Pointeur vers la Grille de jeu.
+ * @param joueur Pointeur vers le Joueur.
+ * @param ogre Pointeur vers l'ogre.
+ * @param fantome Pointeur vers le fantôme.
+ * @return int PARTIE_EN_COURS, PARTIE_GAGNEE ou PARTIE_PERDUE (le message du joueur est mis à jour).
+ */
+int resoudre_tour(Grille *grille, Joueur *joueur, Monstre *ogre, Monstre *fantome);
 
 /**
  * @brief Initialise un monstre (non placé : actif vaut 0, non chasseur).
@@ -188,5 +224,18 @@ int set_score_joueur(Grille *grille, Joueur *joueur, char *nom_joueur);
  * @param nom_labyrinthe Nom du fichier de sauvegarde du labyrinthe.
  */
 void sauvegarder_score(Grille *grille_de_jeu, char *nom_labyrinthe);
+
+/**
+ * @brief Enregistre le score d'une partie gagnée dans le top 10 et décrit le résultat.
+ * @param grille Grille de la partie (son classement est mis à jour).
+ * @param joueur Joueur qui vient de gagner.
+ * @param nom_joueur Nom du joueur.
+ * @param nom_labyrinthe Nom du fichier du labyrinthe (le classement y est sauvegardé).
+ * @param message Buffer recevant la phrase à afficher (place obtenue, nouveau record...).
+ * @param taille_message Taille du buffer message.
+ * @return int La place obtenue (1 à NOMBRE_SCORE), 0 si le score n'entre pas dans le top.
+ */
+int enregistrer_victoire(Grille *grille, Joueur *joueur, const char *nom_joueur, char *nom_labyrinthe,
+                         char *message, int taille_message);
 
 #endif
