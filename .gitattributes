@@ -1,0 +1,3 @@
+# Données du jeu lues par le programme C : fins de ligne Unix partout
+labyrinthe/* text eol=lf
+joueurs.txt text eol=lf
