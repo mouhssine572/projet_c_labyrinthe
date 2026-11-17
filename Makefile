@@ -72,7 +72,8 @@ DEPS = $(MAIN_OBJS:.o=.d) \
        $(BUILD_DIR)/graphique.d \
        $(BUILD_DIR)/sons.d \
        $(BUILD_DIR)/test_jouer.d \
-       $(BUILD_DIR)/test_labyrinthe.d \n       $(BUILD_DIR)/test_menu.d
+       $(BUILD_DIR)/test_labyrinthe.d \
+       $(BUILD_DIR)/test_menu.d
 
 # Cibles phony et cible par défaut
 .PHONY: all jeu console windows test memcheck clean distclean dirs
@@ -180,6 +181,11 @@ WIN_OBJS   = $(patsubst $(SRC_DIR)/%.c, $(WIN_BUILD)/%.o, $(GUI_SRCS))
 POLICE_DIR = /usr/share/fonts/truetype/dejavu
 
 windows: $(WIN_EXE)
+	@# Données de départ : uniquement le labyrinthe et le joueur fournis (pas les parties de test)
+	rm -rf $(WIN_DIST)/labyrinthe $(WIN_DIST)/joueurs.txt
+	@$(MKDIR_P) $(WIN_DIST)/labyrinthe
+	cp labyrinthe/labyrinthe_1 $(WIN_DIST)/labyrinthe/
+	cp joueurs.txt $(WIN_DIST)/
 	@$(RM) $(BIN_DIR)/Labyrinthe-Windows.zip
 	@if command -v zip >/dev/null; then \
 	    cd $(BIN_DIR) && zip -qr Labyrinthe-Windows.zip Labyrinthe-Windows && \
