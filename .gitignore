@@ -1,7 +1,7 @@
 /build
 /bin
-/labyrinthe
+# Labyrinthes créés en jouant : seul labyrinthe_1 est fourni avec le projet
+/labyrinthe/*
+!/labyrinthe/labyrinthe_1
 # Fichier temporaire créé par les tests
 temp_input.txt
-# Noms des joueurs mémorisés entre les sessions
-joueurs.txt
